@@ -1,8 +1,8 @@
 ### Health check — localhost
 GET http://localhost:8000/health
 
-### Health check — Railway (replace with real URL when deployed)
-GET https://your-app.railway.app/health
+### Health check — Railway
+GET https://award-interpreter-production.up.railway.app/health
 
 ### Get rates — localhost
 GET http://localhost:8000/api/v1/rates/MA000004/casual_adult
