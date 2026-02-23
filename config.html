@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configuration & Data Management – Award Interpreter</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .config-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .config-section {
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .config-section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+      .config-section h3 {
+        margin-top: 24px;
+        margin-bottom: 12px;
+        color: #34495e;
+      }
+      .file-path-row {
+        display: grid;
+        grid-template-columns: 200px 1fr 100px;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+      .file-path-row label {
+        font-weight: 600;
+        color: #555;
+      }
+      .file-path-row input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+      .file-path-row button {
+        padding: 8px 16px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .file-path-row button:hover {
+        background: #2980b9;
+      }
+      .relationship-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      .relationship-table th,
+      .relationship-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      .relationship-table th {
+        background: #34495e;
+        color: white;
+        font-weight: 600;
+      }
+      .relationship-table tr:hover {
+        background: #f5f5f5;
+      }
+      .issue-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .issue-item {
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid #ffc107;
+        background: #fff3cd;
+        border-radius: 4px;
+      }
+      .issue-item.error {
+        border-left-color: #dc3545;
+        background: #f8d7da;
+      }
+      .issue-item.warning {
+        border-left-color: #ffc107;
+        background: #fff3cd;
+      }
+      .issue-item.info {
+        border-left-color: #17a2b8;
+        background: #d1ecf1;
+      }
+      .issue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 8px;
+      }
+      .issue-title {
+        font-weight: 600;
+        color: #333;
+      }
+      .issue-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .btn-small {
+        padding: 4px 12px;
+        font-size: 0.85em;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .btn-fix {
+        background: #28a745;
+        color: white;
+      }
+      .btn-fix:hover {
+        background: #218838;
+      }
+      .btn-ignore {
+        background: #6c757d;
+        color: white;
+      }
+      .btn-ignore:hover {
+        background: #5a6268;
+      }
+      .override-form {
+        margin-top: 12px;
+        padding: 12px;
+        background: white;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+      .override-form input,
+      .override-form select {
+        padding: 6px 10px;
+        margin: 4px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .override-form button {
+        padding: 6px 16px;
+        margin: 4px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: 600;
+      }
+      .status-success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .status-error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .status-warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .save-config-btn {
+        padding: 12px 24px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+      .save-config-btn:hover {
+        background: #218838;
+      }
+      .mapping-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .mapping-controls select,
+      .mapping-controls input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .mapping-controls button {
+        padding: 8px 16px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+    <script type="module" src="./src/data-loader.js"></script>
+    <script type="module" src="./src/config-manager.js"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <h1>Configuration & Data Management</h1>
+        <p>Configure file paths, define relationships, and fix data issues</p>
+        <nav style="margin-top: 12px;">
+          <a href="./index.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Calculator</a>
+          <a href="./config.html" style="margin-right: 16px; color: #3498db; text-decoration: none; font-weight: bold;">Configuration</a>
+          <a href="./documentation.html" style="color: #3498db; text-decoration: none;">Documentation</a>
+        </nav>
+      </header>
+
+      <main class="config-container">
+        <!-- File Configuration Section -->
+        <section class="config-section">
+          <h2>1. File Configuration</h2>
+          <p>Configure the paths to your CSV data files. Changes are saved to browser storage.</p>
+          
+          <div id="filePathsContainer">
+            <div class="file-path-row">
+              <label>Awards CSV:</label>
+              <input type="text" id="awardsPath" value="./data/source/map-award-export-2025.csv" />
+              <button onclick="testFile('awardsPath')">Test</button>
+            </div>
+            <div class="file-path-row">
+              <label>Classifications CSV:</label>
+              <input type="text" id="classificationsPath" value="./data/source/map-classification-export-2025.csv" />
+              <button onclick="testFile('classificationsPath')">Test</button>
+            </div>
+            <div class="file-path-row">
+              <label>Penalties CSV:</label>
+              <input type="text" id="penaltiesPath" value="./data/source/map-penalty-export-2025.csv" />
+              <button onclick="testFile('penaltiesPath')">Test</button>
+            </div>
+            <div class="file-path-row">
+              <label>Wage Allowances CSV:</label>
+              <input type="text" id="wageAllowancesPath" value="./data/source/map-wage-allowance-export-2025.csv" />
+              <button onclick="testFile('wageAllowancesPath')">Test</button>
+            </div>
+            <div class="file-path-row">
+              <label>Expense Allowances CSV:</label>
+              <input type="text" id="expenseAllowancesPath" value="./data/source/map-expense-allowance-export-2025.csv" />
+              <button onclick="testFile('expenseAllowancesPath')">Test</button>
+            </div>
+          </div>
+
+          <button class="save-config-btn" onclick="saveFilePaths()">Save File Paths</button>
+          <div id="filePathStatus" style="margin-top: 12px;"></div>
+        </section>
+
+        <!-- Data Relationships Section -->
+        <section class="config-section">
+          <h2>2. Data Relationships</h2>
+          <p>Define how data from different CSV files relates to each other.</p>
+
+          <h3>2.1 Award-Classification Mapping</h3>
+          <div class="mapping-controls">
+            <select id="awardSelectMapping">
+              <option value="">Select Award</option>
+            </select>
+            <select id="classificationSelectMapping">
+              <option value="">Select Classification</option>
+            </select>
+            <select id="rateTypeSelectMapping">
+              <option value="">Select Rate Type</option>
+              <option value="CA">Casual (CA)</option>
+              <option value="FT">Full-time (FT)</option>
+              <option value="PT">Part-time (PT)</option>
+            </select>
+            <button onclick="addClassificationMapping()">Add Mapping</button>
+          </div>
+          <table class="relationship-table">
+            <thead>
+              <tr>
+                <th>Award Code</th>
+                <th>Classification</th>
+                <th>Rate Type</th>
+                <th>Base Rate</th>
+                <th>Calculated Rate</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="classificationMappingsTable">
+              <tr>
+                <td colspan="6" style="text-align: center; color: #999;">No mappings defined. Data will use CSV relationships.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>2.2 Penalty Rate Mappings</h3>
+          <div class="info" style="margin-bottom: 12px;">
+            <strong>Common fixes:</strong>
+            <ul style="margin: 8px 0 0 20px; font-size: 0.9em;">
+              <li><strong>Sunday rate:</strong> Description: "Sunday" or "Sunday - ordinary hours", Rate: $39.83 (for $26.55 base × 1.50)</li>
+              <li><strong>Saturday flat rate:</strong> Description: "Saturday - ordinary hours", Rate: $33.19 (for $26.55 base × 1.25)</li>
+            </ul>
+          </div>
+          <div class="mapping-controls">
+            <select id="penaltyAwardSelect">
+              <option value="">Select Award</option>
+            </select>
+            <select id="penaltyClassificationSelect">
+              <option value="">Select Classification</option>
+            </select>
+            <input type="text" id="penaltyDescription" placeholder="Penalty description (e.g., 'Sunday', 'Saturday - ordinary hours')" style="flex: 1;" />
+            <input type="number" id="penaltyRate" placeholder="Rate ($/hr)" step="0.01" style="width: 150px;" />
+            <button onclick="addPenaltyMapping()">Add Override</button>
+          </div>
+          <table class="relationship-table">
+            <thead>
+              <tr>
+                <th>Award</th>
+                <th>Classification</th>
+                <th>Description</th>
+                <th>Rate ($/hr)</th>
+                <th>Source</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="penaltyMappingsTable">
+              <tr>
+                <td colspan="6" style="text-align: center; color: #999;">No overrides defined. Using CSV data.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Data Issues Section -->
+        <section class="config-section">
+          <h2>3. Data Issues & Fixes</h2>
+          <p>Review and fix data validation issues detected by the system.</p>
+
+          <div class="info" style="margin-bottom: 20px;">
+            <strong>Quick Fix Guide:</strong>
+            <ul style="margin: 8px 0 0 20px;">
+              <li><strong>Sunday rate wrong:</strong> Click "Fix" button on the warning, or manually override in Section 4.2</li>
+              <li><strong>Saturday using tiered rates:</strong> Override "Saturday - ordinary hours" to use flat ×1.25 rate ($33.19/hr for $26.55 base)</li>
+              <li><strong>After fixing:</strong> Reload the main calculator page to see changes</li>
+            </ul>
+          </div>
+
+          <div id="issuesContainer">
+            <ul class="issue-list" id="issuesList">
+              <li class="issue-item">
+                <div class="issue-header">
+                  <div>
+                    <span class="issue-title">No issues detected</span>
+                    <p style="margin: 8px 0 0 0; color: #666;">Run a calculation to detect data issues.</p>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button class="save-config-btn" onclick="scanForIssues()">Scan for Issues</button>
+            <button class="save-config-btn" onclick="clearAllOverrides()" style="background: #dc3545; margin-left: 12px;">Clear All Overrides</button>
+          </div>
+        </section>
+
+        <!-- Rate Overrides Section -->
+        <section class="config-section">
+          <h2>4. Rate Overrides</h2>
+          <p>Manually override rates when CSV data is incorrect or needs adjustment.</p>
+
+          <h3>4.1 Classification Rate Overrides</h3>
+          <table class="relationship-table">
+            <thead>
+              <tr>
+                <th>Award</th>
+                <th>Classification</th>
+                <th>Rate Type</th>
+                <th>Original Rate</th>
+                <th>Override Rate</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rateOverridesTable">
+              <tr>
+                <td colspan="6" style="text-align: center; color: #999;">No overrides defined.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="mapping-controls" style="margin-top: 16px;">
+            <select id="overrideAwardSelect">
+              <option value="">Select Award</option>
+            </select>
+            <select id="overrideClassificationSelect">
+              <option value="">Select Classification</option>
+            </select>
+            <select id="overrideRateTypeSelect">
+              <option value="">Rate Type</option>
+              <option value="CA">Casual</option>
+              <option value="FT">Full-time</option>
+              <option value="PT">Part-time</option>
+            </select>
+            <input type="number" id="overrideRateValue" placeholder="Override rate ($)" step="0.01" />
+            <button onclick="addRateOverride()">Add Override</button>
+          </div>
+
+          <h3>4.2 Penalty Rate Overrides</h3>
+          <p>Override specific penalty rates for award/classification combinations.</p>
+          <div id="penaltyOverridesContainer">
+            <!-- Populated dynamically -->
+          </div>
+        </section>
+
+        <!-- Validation Rules Section -->
+        <section class="config-section">
+          <h2>5. Validation Rules</h2>
+          <p>Configure validation rules and thresholds for data quality checks.</p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <h3>Rate Validation</h3>
+              <label style="display: block; margin: 12px 0 4px 0;">
+                <input type="checkbox" id="validateSundayRate" checked />
+                Validate Sunday rate = casual loaded rate × 1.50
+              </label>
+              <label style="display: block; margin: 12px 0 4px 0;">
+                <input type="checkbox" id="validateSaturdaySunday" checked />
+                Warn if Saturday rate exceeds Sunday rate
+              </label>
+              <label style="display: block; margin: 12px 0 4px 0;">
+                <input type="number" id="rateTolerance" value="0.01" step="0.01" min="0" style="width: 100px; margin-left: 8px;" />
+                Rate tolerance ($) for validation
+              </label>
+            </div>
+            <div>
+              <h3>Minimum Engagement</h3>
+              <label style="display: block; margin: 12px 0 4px 0;">
+                <input type="checkbox" id="enforceMinimumEngagement" checked />
+                Enforce casual minimum engagement (3 hours)
+              </label>
+              <label style="display: block; margin: 12px 0 4px 0;">
+                <input type="number" id="minimumEngagementHours" value="3" step="0.5" min="0" style="width: 100px; margin-left: 8px;" />
+                Minimum engagement hours
+              </label>
+            </div>
+          </div>
+
+          <button class="save-config-btn" onclick="saveValidationRules()">Save Validation Rules</button>
+        </section>
+
+        <!-- Export/Import Configuration -->
+        <section class="config-section">
+          <h2>6. Export/Import Configuration</h2>
+          <p>Export your configuration to a JSON file or import from a previously saved configuration.</p>
+
+          <div style="display: flex; gap: 12px;">
+            <button class="save-config-btn" onclick="exportConfiguration()" style="background: #17a2b8;">Export Configuration</button>
+            <button class="save-config-btn" onclick="importConfiguration()" style="background: #17a2b8;">Import Configuration</button>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)" />
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      // Global functions for inline event handlers
+      window.testFile = async function(pathId) {
+        const path = document.getElementById(pathId).value;
+        const statusDiv = document.getElementById('filePathStatus');
+        statusDiv.innerHTML = `<span class="status-badge status-warning">Testing ${path}...</span>`;
+        
+        try {
+          const response = await fetch(path, { method: 'HEAD' });
+          if (response.ok) {
+            statusDiv.innerHTML = `<span class="status-badge status-success">✓ File accessible</span>`;
+          } else {
+            statusDiv.innerHTML = `<span class="status-badge status-error">✗ File not found (${response.status})</span>`;
+          }
+        } catch (error) {
+          statusDiv.innerHTML = `<span class="status-badge status-error">✗ Error: ${error.message}</span>`;
+        }
+      };
+
+      window.saveFilePaths = function() {
+        const paths = {
+          awards: document.getElementById('awardsPath').value,
+          classifications: document.getElementById('classificationsPath').value,
+          penalties: document.getElementById('penaltiesPath').value,
+          wageAllowances: document.getElementById('wageAllowancesPath').value,
+          expenseAllowances: document.getElementById('expenseAllowancesPath').value,
+        };
+        localStorage.setItem('csvPaths', JSON.stringify(paths));
+        alert('File paths saved! Reload the main page to apply changes.');
+      };
+
+      window.addClassificationMapping = function() {
+        // Implemented in config-manager.js
+        if (window.configManager) {
+          window.configManager.addClassificationMapping();
+        }
+      };
+
+      window.addPenaltyMapping = function() {
+        if (window.configManager) {
+          window.configManager.addPenaltyMapping();
+        }
+      };
+
+      window.addRateOverride = function() {
+        if (window.configManager) {
+          window.configManager.addRateOverride();
+        }
+      };
+
+      window.scanForIssues = function() {
+        if (window.configManager) {
+          window.configManager.scanForIssues();
+        }
+      };
+
+      window.clearAllOverrides = function() {
+        if (confirm('Are you sure you want to clear all overrides? This cannot be undone.')) {
+          if (window.configManager) {
+            window.configManager.clearAllOverrides();
+          }
+        }
+      };
+
+      window.saveValidationRules = function() {
+        if (window.configManager) {
+          window.configManager.saveValidationRules();
+        }
+      };
+
+      window.exportConfiguration = function() {
+        if (window.configManager) {
+          window.configManager.exportConfiguration();
+        }
+      };
+
+      window.importConfiguration = function() {
+        document.getElementById('importFileInput').click();
+      };
+
+      window.handleImportFile = function(event) {
+        const file = event.target.files[0];
+        if (file && window.configManager) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const config = JSON.parse(e.target.result);
+              window.configManager.importConfiguration(config);
+            } catch (error) {
+              alert('Error importing configuration: ' + error.message);
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+
+      // Load saved paths on page load
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedPaths = localStorage.getItem('csvPaths');
+        if (savedPaths) {
+          try {
+            const paths = JSON.parse(savedPaths);
+            if (paths.awards) document.getElementById('awardsPath').value = paths.awards;
+            if (paths.classifications) document.getElementById('classificationsPath').value = paths.classifications;
+            if (paths.penalties) document.getElementById('penaltiesPath').value = paths.penalties;
+            if (paths.wageAllowances) document.getElementById('wageAllowancesPath').value = paths.wageAllowances;
+            if (paths.expenseAllowances) document.getElementById('expenseAllowancesPath').value = paths.expenseAllowances;
+          } catch (e) {
+            console.error('Error loading saved paths:', e);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

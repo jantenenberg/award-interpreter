@@ -1,0 +1,14 @@
+{
+  "name": "fairwork-calculator",
+  "version": "1.0.0",
+  "description": "Fair Work Award calculator - rates and shift cost",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "xlsx": "^0.18.5"
+  }
+}

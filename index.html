@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fair Work Award Calculator – Rates Explorer (Phase 1)</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <!-- PapaParse for robust CSV parsing -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"
+      integrity="sha384-HG7m3L5GNyqu7xF2u7ZbE5qZ2jVh63B3dM4bZ6SzdJw3+V0cQ/4Ey0Y2+7xB0+7E"
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="./src/data-loader.js?v=20250218"></script>
+    <script type="module" src="./src/dropdown-manager.js?v=20250218"></script>
+    <script type="module" src="./src/rate-display.js?v=20250218"></script>
+    <script type="module" src="./src/shift-cost-manager.js?v=20250218"></script>
+  </head>
+  <body>
+    <div class="app-container" role="application" aria-label="Fair Work Award calculator – rate explorer">
+      <header class="app-header">
+        <h1>Fair Work Award Calculator</h1>
+        <p>Phase 1 – Explore base and penalty rates from Fair Work MAP CSV exports</p>
+        <nav style="margin-top: 12px;">
+          <a href="./index.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Calculator</a>
+          <a href="./config.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Configuration</a>
+          <a href="./documentation.html" style="color: #3498db; text-decoration: none;">Documentation</a>
+        </nav>
+      </header>
+
+      <main class="app-content">
+        <!-- Global loading + status -->
+        <section class="section" aria-live="polite">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span>Data loading status</span>
+            </div>
+          </div>
+          <div id="fw-loading-row" class="loading-row">
+            <div class="spinner" aria-hidden="true"></div>
+            <div>
+              <div id="fw-loading-text" class="status-loading">
+                Loading Fair Work CSV data…
+              </div>
+              <div id="fw-loading-detail" class="help-text">
+                Parsing 5 CSV files: awards, classifications, penalties, wage allowances, expense allowances.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 1: Award selection -->
+        <section class="section" aria-labelledby="section-award-heading">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span id="section-award-heading">Award & employment type</span>
+            </div>
+            <div class="section-meta">
+              <span class="badge" id="badge-awards-count">
+                <span class="badge-dot"></span>
+                <span>Loading awards…</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <!-- Award dropdown (search + select) -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="awardSearch">
+                  Award
+                  <span class="required" aria-hidden="true">*</span>
+                </label>
+                <span id="award-options-count" class="options-count">(0 options)</span>
+              </div>
+              <input
+                id="awardSearch"
+                class="form-control"
+                type="search"
+                placeholder="Type to search 155+ awards"
+                autocomplete="off"
+                aria-describedby="award-search-help"
+                disabled
+              />
+              <span id="award-search-help" class="help-text">
+                Start typing an award code or name to filter.
+              </span>
+              <select
+                id="awardSelect"
+                class="form-select"
+                size="8"
+                aria-label="Award code"
+                disabled
+              >
+                <option value="">Loading awards…</option>
+              </select>
+            </div>
+
+            <!-- Employee rate type -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="rateTypeSelect">
+                  Employee rate type
+                  <span class="required" aria-hidden="true">*</span>
+                </label>
+                <span id="rate-type-options-count" class="options-count">(9 options)</span>
+              </div>
+              <select
+                id="rateTypeSelect"
+                class="form-select"
+                aria-describedby="rate-type-help"
+                disabled
+              >
+                <option value="">Select employment type</option>
+                <option value="AD">AD – Adult</option>
+                <option value="FT">FT – Full-time</option>
+                <option value="PT">PT – Part-time</option>
+                <option value="CA">CA – Casual</option>
+                <option value="JR">JR – Junior</option>
+                <option value="AP">AP – Apprentice</option>
+                <option value="TR">TR – Trainee</option>
+                <option value="DI">DI – Disability</option>
+                <option value="SL">SL – School-based</option>
+              </select>
+              <span id="rate-type-help" class="help-text">
+                Classifications are filtered by this code; adult (AD) classifications are also included where applicable.
+              </span>
+            </div>
+
+            <!-- Casual loading percentage (used when converting weekly base to hourly for CA) -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="casualLoadingPercent">Casual loading %</label>
+              </div>
+              <input
+                id="casualLoadingPercent"
+                class="form-control"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value="25"
+                placeholder="25"
+                aria-describedby="casual-loading-help"
+              />
+              <span id="casual-loading-help" class="help-text">
+                Applied when weekly base rate is converted to hourly for casual (CA) employees. Default 25%. Only affects calculations when calculated rate is missing and base is weekly.
+              </span>
+            </div>
+
+            <!-- State / Territory -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="stateSelect">
+                  State / territory
+                  <span class="required" aria-hidden="true">*</span>
+                </label>
+              </div>
+              <select
+                id="stateSelect"
+                class="form-select"
+                aria-label="State or territory"
+              >
+                <option value="">Select state</option>
+                <option value="NSW">NSW – New South Wales</option>
+                <option value="VIC">VIC – Victoria</option>
+                <option value="QLD">QLD – Queensland</option>
+                <option value="WA">WA – Western Australia</option>
+                <option value="SA">SA – South Australia</option>
+                <option value="TAS">TAS – Tasmania</option>
+                <option value="ACT">ACT – Australian Capital Territory</option>
+                <option value="NT">NT – Northern Territory</option>
+              </select>
+              <span class="help-text">Used later for public holiday logic (not applied in Phase 1).</span>
+            </div>
+
+            <!-- Published year -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="yearSelect">Published year</label>
+              </div>
+              <select
+                id="yearSelect"
+                class="form-select"
+                aria-label="Published year"
+              >
+                <option value="2025" selected>2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+              <span class="help-text">
+                Filters to rows where the award/classification is operative for the current date.
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Classification selection -->
+        <section class="section" aria-labelledby="section-classification-heading">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span id="section-classification-heading">Classification</span>
+            </div>
+            <div class="section-meta">
+              <span class="badge" id="badge-classifications-count">
+                <span class="badge-dot"></span>
+                <span>No award selected</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <!-- Classification dropdown -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="classificationSelect">
+                  Classification
+                  <span class="required" aria-hidden="true">*</span>
+                </label>
+                <span id="classification-options-count" class="options-count">(0 options)</span>
+              </div>
+              <select
+                id="classificationSelect"
+                class="form-select"
+                disabled
+                aria-describedby="classification-help"
+              >
+                <option value="">Select award and rate type first</option>
+              </select>
+              <span id="classification-help" class="help-text">
+                Populated after you choose an award and employee rate type.
+              </span>
+            </div>
+
+            <!-- Auto-populated metadata fields -->
+            <div class="form-group">
+              <label for="awardFixedId">Award fixed ID</label>
+              <input
+                id="awardFixedId"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+              <span class="help-text muted">From `mapawardexport2025.csv`.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="classificationFixedId">Classification fixed ID</label>
+              <input
+                id="classificationFixedId"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+              <span class="help-text muted">From `mapclassificationexport2025.csv`.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="classificationLevel">Classification level</label>
+              <input
+                id="classificationLevel"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="parentClassificationName">Parent classification name</label>
+              <input
+                id="parentClassificationName"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="baseRateField">Base rate ($/hour)</label>
+              <input
+                id="baseRateField"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="calculatedRateField">Calculated rate ($/hour)</label>
+              <input
+                id="calculatedRateField"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="baseRateTypeField">Base rate type</label>
+              <input
+                id="baseRateTypeField"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="calculatedRateTypeField">Calculated rate type</label>
+              <input
+                id="calculatedRateTypeField"
+                class="form-control"
+                type="text"
+                readonly
+                aria-readonly="true"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Rate display -->
+        <section class="section" aria-labelledby="section-rates-heading">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span id="section-rates-heading">Base and penalty rates</span>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <!-- Base rate panel -->
+            <div class="form-group">
+              <div class="rate-panel" id="baseRatePanel" aria-live="polite">
+                <div class="rate-panel-header">
+                  <div class="rate-panel-title">Selected classification</div>
+                  <div id="baseRateEmploymentType" class="pill pill-casual" hidden></div>
+                </div>
+                <div id="baseRateBody" class="rate-panel-body">
+                  <div class="empty-state" id="baseRateEmpty">
+                    Choose an award, rate type, and classification to see base rate details.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Applicable penalty rates (separate section, collapsed by default) -->
+          <details class="collapsible-details" id="penaltiesDetails">
+            <summary class="collapsible-summary" id="section-penalties-heading">
+              <span class="section-title">
+                <span class="section-title-dot"></span>
+                <span>Applicable penalty rates</span>
+              </span>
+              <span class="pill" id="penaltiesSummary">No classification selected</span>
+            </summary>
+            <div class="collapsible-content">
+              <div id="penaltiesContainer" aria-live="polite">
+                <div class="empty-state">
+                  Penalty rates for the chosen classification will appear here, filtered by
+                  <span class="tooltip" aria-label="Award code, classification name/level, employee rate type (including Adult AD as wildcard).">
+                    award, classification, and rate type
+                  </span>.
+                </div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Section 3b: Roster shift cost calculator -->
+        <section class="section" aria-labelledby="section-shift-heading">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span id="section-shift-heading">Roster shift cost calculator</span>
+            </div>
+            <div class="section-meta">
+              <span class="pill">Add multiple shifts to cost a roster</span>
+            </div>
+          </div>
+
+          <div class="roster-controls">
+            <button id="addShiftBtn" class="btn btn-secondary" type="button">
+              Add shift
+            </button>
+            <button
+              id="calculateShiftBtn"
+              class="btn btn-primary"
+              type="button"
+              disabled
+            >
+              Calculate roster cost
+            </button>
+          </div>
+
+          <div class="roster-shifts-wrapper" role="region" aria-label="Shifts">
+            <table class="roster-shifts-table" id="rosterShiftsTable">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Start</th>
+                  <th scope="col">Duration (hrs)</th>
+                  <th scope="col">Break (min)</th>
+                  <th scope="col">Kms</th>
+                  <th scope="col"><span class="sr-only">Remove</span></th>
+                </tr>
+              </thead>
+              <tbody id="rosterShiftsBody">
+                <!-- Rows added dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="shiftCostResult" class="rate-panel" aria-live="polite" hidden>
+            <div class="rate-panel-header">
+              <div class="rate-panel-title">Roster cost breakdown</div>
+            </div>
+            <div id="shiftCostSegments" class="shift-cost-segments"></div>
+            <div id="shiftCostTotal" class="shift-cost-total"></div>
+            <div id="shiftCostError" class="status-error" hidden></div>
+          </div>
+        </section>
+
+        <!-- Section 4: Allowances (fully data-driven from CSV) -->
+        <section class="section" aria-labelledby="section-allowances-heading">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span id="section-allowances-heading">Allowances</span>
+            </div>
+            <div class="section-meta">
+              <span class="pill">Populated from MAP wage & expense allowance CSVs</span>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="allowanceType">Wage allowances for selected award</label>
+                <span id="wage-allowance-count" class="options-count">(0 available)</span>
+              </div>
+              <select
+                id="allowanceType"
+                class="form-select"
+                multiple
+                size="6"
+                aria-describedby="wage-allowances-help"
+                disabled
+              >
+                <option value="">Select award first</option>
+              </select>
+              <span id="wage-allowances-help" class="help-text">
+                Options are loaded from <code>map-wage-allowance-export-2025.csv</code> for the chosen award.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="expenseAllowanceType">Expense allowances for selected award</label>
+                <span id="expense-allowance-count" class="options-count">(0 available)</span>
+              </div>
+              <select
+                id="expenseAllowanceType"
+                class="form-select"
+                multiple
+                size="6"
+                aria-describedby="expense-allowances-help"
+                disabled
+              >
+                <option value="">Select award first</option>
+              </select>
+              <span id="expense-allowances-help" class="help-text">
+                Options are loaded from <code>map-expense-allowance-export-2025.csv</code> for the chosen award.
+              </span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "932b362d-6484-43df-b3e2-5fe20e57a40f",
+    "name": "Paper Test",
+    "description": null,
+    "is_active": true,
+    "created_at": "2026-02-13T04:10:15.205826+00:00",
+    "updated_at": "2026-02-13T04:10:15.205826+00:00",
+    "max_position_size": 10000.0,
+    "max_daily_loss": 500.0,
+    "max_concurrent_positions": 3,
+    "risk_per_trade_pct": 1.0,
+    "profit_target_pips": 30.0,
+    "stop_loss_pips": 20.0,
+    "trailing_stop_enabled": false,
+    "trailing_stop_activation_pips": null,
+    "trailing_stop_distance_pips": null,
+    "rsi_period": 14,
+    "rsi_oversold": 30.0,
+    "rsi_overbought": 70.0,
+    "bb_period": 20,
+    "bb_std_dev": 2.0,
+    "atr_period": 14,
+    "enabled_pairs": [
+      "EUR/USD",
+      "USD/JPY"
+    ],
+    "trading_start_hour": 8,
+    "trading_end_hour": 16,
+    "max_trades_per_day": 20,
+    "min_minutes_between_trades": 5,
+    "max_spread_pips": 2.5,
+    "min_volatility_atr": 0.0002,
+    "max_volatility_atr": 0.001,
+    "strategy_type": "mean_reversion"
+  }
+]

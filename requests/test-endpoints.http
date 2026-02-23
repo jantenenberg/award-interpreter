@@ -1,0 +1,65 @@
+### Health check — localhost
+GET http://localhost:8000/health
+
+### Health check — Railway (replace with real URL when deployed)
+GET https://your-app.railway.app/health
+
+### Get rates — localhost
+GET http://localhost:8000/api/v1/rates/MA000004/casual_adult
+
+### Calculate single shift — Wednesday ordinary
+POST http://localhost:8000/api/v1/calculate/shift
+Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY_HERE
+
+{
+  "employee_id": "TEST-001",
+  "shift_date": "2026-02-18",
+  "start_time": "09:00",
+  "duration_hours": 5,
+  "break_minutes": 0,
+  "is_public_holiday": false
+}
+
+### Calculate single shift — Saturday flat rate
+POST http://localhost:8000/api/v1/calculate/shift
+Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY_HERE
+
+{
+  "employee_id": "TEST-001",
+  "shift_date": "2026-02-21",
+  "start_time": "09:00",
+  "duration_hours": 5,
+  "break_minutes": 0,
+  "is_public_holiday": false
+}
+
+### Calculate bulk — Wednesday + Saturday roster
+POST http://localhost:8000/api/v1/calculate/bulk
+Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY_HERE
+
+{
+  "award_code": "MA000004",
+  "employment_type": "CA",
+  "classification_level": 1,
+  "casual_loading_percent": 25,
+  "worker_id": "TEST-001",
+  "shifts": [
+    {
+      "shift_date": "2026-02-18",
+      "start_time": "09:00",
+      "duration_hours": 5,
+      "break_minutes": 0,
+      "is_public_holiday": false
+    },
+    {
+      "shift_date": "2026-02-21",
+      "start_time": "09:00",
+      "duration_hours": 5,
+      "break_minutes": 0,
+      "is_public_holiday": false
+    }
+  ]
+}

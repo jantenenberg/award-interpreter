@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Claude Code local config
+.claude/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment variables — never commit these
+.env
+
+# VS Code
+.vscode/settings.json
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime data
+backend/data/logs/
+backend/data/backtests/
+
+# Railway
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime data
+backend/data/optimization/
+
+# MAP CSV source files (large, sourced from Fair Work Commission)
+data/source/
+
+# Salesforce bulk import result files
+salesforce/*.csv

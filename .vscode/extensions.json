@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.pylance",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "ms-python.isort",
+    "humao.rest-client",
+    "rangav.vscode-thunder-client",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "mikestead.dotenv",
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "pkief.material-icon-theme",
+    "salesforce.salesforcedx-vscode"
+  ]
+}
