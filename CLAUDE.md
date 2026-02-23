@@ -4,7 +4,7 @@
 
 Client-side Fair Work Australia award interpreter and roster shift cost calculator. Loads MAP (Modern Awards Platform) CSV exports from Fair Work Australia, indexes them in memory, and calculates shift costs with penalty rates, overtime, casual loading, and allowances applied.
 
-**Phase 1:** Entirely browser-based; no backend required. The `/backend` directory is a placeholder for a future Salesforce migration.
+**Phase 1:** Entirely browser-based; no backend required.
 
 ---
 
@@ -65,7 +65,6 @@ award-intepreter/
 │   ├── map-wage-allowance-export-2025.csv
 │   └── map-expense-allowance-export-2025.csv
 │
-└── backend/                # Placeholder for future Salesforce/FastAPI migration (not integrated)
 ```
 
 ---
