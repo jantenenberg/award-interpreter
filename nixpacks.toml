@@ -5,5 +5,8 @@ providers = ["python"]
 nixPkgs = ["python311"]
 
 [phases.install]
-# python3 from Nix (setup phase); avoids relying on PATH or venv in install layer
-cmds = ["python3 -m pip install -r backend/requirements.txt"]
+# Nix python311 has no pip; bootstrap it with ensurepip then install deps
+cmds = [
+  "python3 -m ensurepip --upgrade",
+  "python3 -m pip install -r backend/requirements.txt"
+]
