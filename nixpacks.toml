@@ -1,0 +1,10 @@
+# Force Python provider so the build has Python/pip (repo also has package.json → Node would win otherwise)
+providers = ["python"]
+
+[phases.setup]
+# Python 3.11 from Nix; Python provider creates venv at /opt/venv
+nixPkgs = ["python311"]
+
+[phases.install]
+# Install from backend; pip is available after Python provider setup
+cmds = ["pip install -r backend/requirements.txt"]
