@@ -5,8 +5,9 @@ providers = ["python"]
 nixPkgs = ["python311"]
 
 [phases.install]
-# Nix python311 has no pip; bootstrap it with ensurepip then install deps
+# Use a venv to avoid PEP 668; ensure pip in venv then install deps
 cmds = [
-  "python3 -m ensurepip --upgrade",
-  "python3 -m pip install -r backend/requirements.txt"
+  "python3 -m venv /opt/venv",
+  "/opt/venv/bin/python -m ensurepip --upgrade",
+  "/opt/venv/bin/pip install -r backend/requirements.txt"
 ]
