@@ -50,16 +50,22 @@ So you must serve this folder via a static web server (for example, using the bu
 
 ### Running the UI
 
-1. From the project root, start a simple static server, for example:
+**Option A – Node server (recommended for production):**
 
-   ```bash
-   cd /Users/jantenenberg/award-intepreter
-   python -m http.server 8000
-   ```
+```bash
+npm install
+npm start
+```
 
-2. Open the calculator in your browser:
+Then open `http://localhost:3000` (or the port shown; use `PORT=8000 npm start` to override).
 
-   - `http://localhost:8000/index.html`
+**Option B – Any static server:**
+
+```bash
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000/index.html`.
 
 3. The app will:
 
@@ -74,6 +80,17 @@ So you must serve this folder via a static web server (for example, using the bu
 - CSV parsing uses PapaParse via a CDN script tag.
 - The `data/processed/*.json` files are optional in Phase 1; data is cached in memory. A separate Node script can be added later to pre-generate JSON for faster load.
 - Rates are **displayed only** in Phase 1 – no payment/shift calculations are performed yet.
+
+### Deploying to Railway
+
+The project includes a minimal Node server (`server.js`) and reference data in `data/source/` so it can be deployed as a single service:
+
+1. Connect this repo to [Railway](https://railway.app) (GitHub: `jantenenberg/award-interpreter`).
+2. Railway will use `railway.json` and run `npm start`; the app listens on `PORT` (set by Railway).
+3. Health checks use `GET /health`.
+4. Ensure the 5 MAP CSV files are in `data/source/` in the repo (they are included so the deployed app has reference data).
+
+No environment variables are required. The client reads CSV paths from the same origin (e.g. `./data/source/map-award-export-2025.csv`).
 
 ### Unit tests
 

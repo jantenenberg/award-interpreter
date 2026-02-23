@@ -30,5 +30,5 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# MAP CSV source files (large, sourced from Fair Work Commission)
-data/source/
+# Optional: ignore local overrides of reference data if you use custom CSVs
+# data/source/
