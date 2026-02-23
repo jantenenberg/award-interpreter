@@ -2,9 +2,8 @@
 providers = ["python"]
 
 [phases.setup]
-# Python 3.11 from Nix; Python provider creates venv at /opt/venv
 nixPkgs = ["python311"]
 
 [phases.install]
-# Install from backend; pip is available after Python provider setup
-cmds = ["pip install -r backend/requirements.txt"]
+# python3 from Nix (setup phase); avoids relying on PATH or venv in install layer
+cmds = ["python3 -m pip install -r backend/requirements.txt"]

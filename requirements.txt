@@ -1,0 +1,2 @@
+# Root file so Nixpacks detects Python and creates venv; real deps in backend
+-r backend/requirements.txt
