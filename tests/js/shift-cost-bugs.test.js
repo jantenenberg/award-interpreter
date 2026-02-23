@@ -3,8 +3,8 @@ import {
   calculateShiftCost,
   calculateRosterCost,
   auditPenaltyRates,
-} from "../src/lib/shift-cost.js";
-import { penaltyMatchesSelection } from "../src/lib/penalties.js";
+} from "../../src/lib/shift-cost.js";
+import { penaltyMatchesSelection } from "../../src/lib/penalties.js";
 
 // MA000004 Casual Level 1 test data
 const casualClassification = {
