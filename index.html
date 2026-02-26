@@ -20,6 +20,7 @@
     <script type="module" src="./src/dropdown-manager.js?v=20250218"></script>
     <script type="module" src="./src/rate-display.js?v=20250218"></script>
     <script type="module" src="./src/shift-cost-calculator.js?v=20260226"></script>
+    <script type="module" src="./src/resource-cost-calculator.js?v=20260226"></script>
   </head>
   <body>
     <div class="app-container" role="application" aria-label="Maica Roster Costing Calculator">
@@ -412,7 +413,7 @@
 
         <!-- Calculator 2: Shift Cost -->
         <section class="section" aria-labelledby="section-shift-cost-heading">
-          <details class="section-details" open>
+          <details class="section-details">
             <summary class="section-summary">
               <div class="section-header">
                 <div class="section-title">
@@ -473,6 +474,116 @@
 
           <!-- Result -->
           <div id="scResult" class="rate-panel" aria-live="polite" hidden></div>
+
+          </div>
+          </details>
+        </section>
+
+        <!-- Calculator 3: Resource Cost Calculator -->
+        <section class="section" aria-labelledby="section-resource-cost-heading">
+          <details class="section-details">
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-resource-cost-heading">Resource Cost Calculator</span>
+                </div>
+                <div class="section-meta">
+                  <span class="section-hint">One resource · multiple shifts · cost per shift and resource total</span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+          <div class="resource-row">
+            <div class="resource-row-header">
+              <span class="resource-row-number">Resource Details</span>
+            </div>
+            <div class="resource-row-body">
+
+              <div class="resource-field-group">
+                <label class="field-label">Name</label>
+                <input type="text" id="rccName" class="form-control" placeholder="Resource name" />
+              </div>
+
+              <div class="resource-field-group">
+                <label class="field-label">
+                  Award
+                  <span id="rccAwardCount" class="badge-count">(0 options)</span>
+                </label>
+                <input
+                  type="text"
+                  id="rccAwardSearch"
+                  class="form-control"
+                  placeholder="Type to search awards…"
+                  autocomplete="off"
+                />
+                <p class="field-help">Start typing an award code or name to filter.</p>
+                <select id="rccAward" class="form-select" size="5">
+                  <option value="">Select award</option>
+                </select>
+              </div>
+
+              <div class="resource-field-group">
+                <label class="field-label">
+                  Employee rate type
+                  <span class="badge-count">(4 options)</span>
+                </label>
+                <select id="rccRateType" class="form-select">
+                  <option value="">Select employment type</option>
+                  <option value="CA">CA – Casual</option>
+                  <option value="FT">FT – Full-time</option>
+                  <option value="PT">PT – Part-time</option>
+                  <option value="AD">AD – Adult</option>
+                </select>
+                <p class="field-help">Classifications are filtered by this code; adult (AD) classifications are also included where applicable.</p>
+                <div class="rc-loading-group" id="rccLoadingGroup" hidden>
+                  <label class="field-label">Casual loading %</label>
+                  <input
+                    type="number"
+                    id="rccLoading"
+                    class="form-control"
+                    value="25"
+                    min="0"
+                    max="100"
+                    step="1"
+                  />
+                  <p class="field-help">Applied when weekly base rate is converted to hourly for casual (CA) employees. Default 25%.</p>
+                </div>
+              </div>
+
+              <div class="resource-field-group">
+                <label class="field-label">
+                  Classification
+                  <span id="rccClassCount" class="badge-count">(0 options)</span>
+                </label>
+                <select id="rccClassification" class="form-select" disabled>
+                  <option value="">Select award and rate type first</option>
+                </select>
+                <p class="field-help">Populated after you choose an award and employee rate type.</p>
+                <label class="field-label">Wage allowances</label>
+                <select id="rccWageAllowances" class="form-select" multiple size="4" disabled>
+                  <option value="">Select award first</option>
+                </select>
+                <label class="field-label">Expense allowances</label>
+                <select id="rccExpenseAllowances" class="form-select" multiple size="4" disabled>
+                  <option value="">Select award first</option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="rcc-shifts-header">
+            <span class="subsection-label">Shifts</span>
+            <button class="btn btn-secondary" id="rccAddShift" type="button">+ Add Shift</button>
+          </div>
+          <div id="rccShifts"></div>
+
+          <div class="shift-cost-actions">
+            <button class="btn btn-primary" id="rccCalculate" type="button">Calculate Resource Cost</button>
+          </div>
+
+          <div id="rccResult" class="rate-panel" aria-live="polite" hidden></div>
 
           </div>
           </details>

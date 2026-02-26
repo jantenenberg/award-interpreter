@@ -307,9 +307,6 @@ function collectPayload() {
 
   const workers = [];
   const workerIds = [];
-   // Per-worker allowance cost maps sent to backend
-  const wageAllowanceCostsByWorker = {};
-  const expenseAllowanceCostsByWorker = {};
 
   document.querySelectorAll('#scResources .resource-row').forEach(row => {
     const classVal = row.querySelector('.rc-classification').value;
@@ -326,55 +323,6 @@ function collectPayload() {
     const wId = row.dataset.resourceId;
     const awardCode = row.querySelector('.rc-award').value || 'MA000004';
     const employmentType = row.querySelector('.rc-rate-type').value || 'CA';
-
-    // Approximate paid hours for allowances (apply 3hr minimum for casual)
-    const rawHours = Math.max(0, durationHours - (breakMinutes / 60));
-    const paidHoursForAllowances =
-      employmentType === 'CA' && rawHours > 0 && rawHours < 3 ? 3 : rawHours;
-
-    // Calculate per-worker allowance costs
-    const { allowancesByAward, classificationsByAward } = getDataIndexes();
-    const allowanceEntry = allowancesByAward.get(awardCode) || { wage: [], expense: [] };
-    const allClassRows = classificationsByAward.get(awardCode) || [];
-    const classificationRow = allClassRows.find(
-      r =>
-        r.classification === classification &&
-        Number(r.classificationLevel) === Number(classificationLevel)
-    ) || null;
-
-    const wageSel = row.querySelector('.rc-wage-allowances');
-    const expenseSel = row.querySelector('.rc-expense-allowances');
-
-    let wageCost = 0;
-    if (wageSel && !wageSel.disabled && allowanceEntry.wage) {
-      Array.from(wageSel.selectedOptions).forEach(opt => {
-        const idx = parseInt(opt.value, 10);
-        const allowance = allowanceEntry.wage[idx];
-        if (!allowance) return;
-        const c = calculateWageAllowanceCost(
-          allowance,
-          classificationRow,
-          paidHoursForAllowances,
-          null
-        );
-        if (c) wageCost += c;
-      });
-    }
-
-    let expenseCost = 0;
-    if (expenseSel && !expenseSel.disabled && allowanceEntry.expense) {
-      Array.from(expenseSel.selectedOptions).forEach(opt => {
-        const idx = parseInt(opt.value, 10);
-        const allowance = allowanceEntry.expense[idx];
-        if (!allowance) return;
-        const c = calculateExpenseAllowanceCost(allowance, 0);
-        if (c) expenseCost += c;
-      });
-    }
-
-    if (wageCost) wageAllowanceCostsByWorker[wId] = (wageAllowanceCostsByWorker[wId] || 0) + wageCost;
-    if (expenseCost) expenseAllowanceCostsByWorker[wId] =
-      (expenseAllowanceCostsByWorker[wId] || 0) + expenseCost;
 
     workers.push({
       worker_id: wId,
@@ -402,8 +350,6 @@ function collectPayload() {
       is_public_holiday: isPublicHoliday,
       kms: 0,
       worker_ids: workerIds,
-      wage_allowance_costs_by_worker: wageAllowanceCostsByWorker,
-      expense_allowance_costs_by_worker: expenseAllowanceCostsByWorker,
     }],
   };
 }
@@ -428,32 +374,133 @@ function renderResult(data) {
       <strong>Shift:</strong> ${label}
     </div>`;
 
+  let shiftTotal = 0;
+
   shift.workers.forEach(worker => {
-    const wageAllow = Number(worker.wage_allowance_cost ?? 0);
-    const expenseAllow = Number(worker.expense_allowance_cost ?? 0);
-    const workerTotal = Number(worker.gross_pay ?? 0);
-    const baseWage = workerTotal - wageAllow - expenseAllow;
+    // Base wages from backend; allowances are added client-side
+    const baseWage = Number(worker.gross_pay ?? 0);
+
+    const {
+      allowancesByAward,
+      classificationsByAward,
+    } = getDataIndexes();
+
+    // Find the matching resource row in the UI
+    const row = document.querySelector(
+      `#scResources .resource-row[data-resource-id="${worker.worker_id}"]`
+    );
+
+    let awardCode = worker.award_code;
+    let classVal = '';
+    if (row) {
+      awardCode =
+        row.querySelector('.rc-award')?.value?.trim() || worker.award_code;
+      classVal = row.querySelector('.rc-classification')?.value || '';
+    }
+
+    const allowanceEntry =
+      (awardCode && allowancesByAward.get(awardCode)) || {
+        wage: [],
+        expense: [],
+      };
+    const allClassRows =
+      (awardCode && classificationsByAward.get(awardCode)) || [];
+
+    let classificationRow = null;
+    if (classVal && allClassRows.length) {
+      try {
+        const parsed = JSON.parse(classVal);
+        classificationRow =
+          allClassRows.find(
+            (r) =>
+              r.classification === parsed.classification &&
+              Number(r.classificationLevel) ===
+                Number(parsed.classificationLevel)
+          ) || null;
+      } catch {
+        classificationRow = allClassRows[0] || null;
+      }
+    } else if (allClassRows.length) {
+      classificationRow = allClassRows[0];
+    }
+
+    // Estimate paid hours from segments for allowance calculations
+    const hours = (worker.segments || []).reduce(
+      (sum, s) => sum + (Number(s.hours) || 0),
+      0
+    );
+    const rawHours = Math.max(0, hours);
+    const paidHoursForAllowances =
+      worker.employment_type === 'CA' && rawHours > 0 && rawHours < 3
+        ? 3
+        : rawHours;
+    const ordinaryHourly = rawHours > 0 ? baseWage / rawHours : 0;
+
+    const wageItems = [];
+    const expenseItems = [];
+
+    if (row) {
+      const wageSel = row.querySelector('.rc-wage-allowances');
+      const expenseSel = row.querySelector('.rc-expense-allowances');
+
+      if (wageSel && !wageSel.disabled && allowanceEntry.wage) {
+        Array.from(wageSel.selectedOptions).forEach((opt) => {
+          const idx = parseInt(opt.value, 10);
+          const a = allowanceEntry.wage[idx];
+          if (!a) return;
+          const amount =
+            calculateWageAllowanceCost(
+              a,
+              classificationRow,
+              paidHoursForAllowances,
+              ordinaryHourly
+            ) || 0;
+          if (!amount) return;
+          const label = a.allowance || a.type || 'Wage allowance';
+          wageItems.push({ label, amount });
+        });
+      }
+
+      if (expenseSel && !expenseSel.disabled && allowanceEntry.expense) {
+        Array.from(expenseSel.selectedOptions).forEach((opt) => {
+          const idx = parseInt(opt.value, 10);
+          const a = allowanceEntry.expense[idx];
+          if (!a) return;
+          const amount = calculateExpenseAllowanceCost(a, 0) || 0;
+          if (!amount) return;
+          const label = a.allowance || a.type || 'Expense allowance';
+          expenseItems.push({ label, amount });
+        });
+      }
+    }
 
     let breakdownRows = '';
+
+    const totalAllowances =
+      wageItems.reduce((s, i) => s + i.amount, 0) +
+      expenseItems.reduce((s, i) => s + i.amount, 0);
+    const workerTotal = baseWage + totalAllowances;
+    shiftTotal += workerTotal;
+
     breakdownRows += `
       <tr>
         <td>Base wages</td>
         <td class="result-breakdown-amount">${fmt(baseWage)}</td>
       </tr>`;
-    if (wageAllow !== 0) {
+    wageItems.forEach(item => {
       breakdownRows += `
       <tr>
-        <td>Wage allowances</td>
-        <td class="result-breakdown-amount">${fmt(wageAllow)}</td>
+        <td>${item.label}</td>
+        <td class="result-breakdown-amount">${fmt(item.amount)}</td>
       </tr>`;
-    }
-    if (expenseAllow !== 0) {
+    });
+    expenseItems.forEach(item => {
       breakdownRows += `
       <tr>
-        <td>Expense allowances</td>
-        <td class="result-breakdown-amount">${fmt(expenseAllow)}</td>
+        <td>${item.label}</td>
+        <td class="result-breakdown-amount">${fmt(item.amount)}</td>
       </tr>`;
-    }
+    });
     breakdownRows += `
       <tr class="result-breakdown-total-row">
         <td>Total</td>
@@ -485,7 +532,6 @@ function renderResult(data) {
       </details>`;
   });
 
-  const shiftTotal = shift.shift_total_cost;
   html += `
     <div class="result-shift-total">
       <span>Shift total</span>
