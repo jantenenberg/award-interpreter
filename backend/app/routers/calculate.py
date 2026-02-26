@@ -222,6 +222,9 @@ async def calculate_shift_roster(request: ShiftRosterRequest):
             ordinary_hourly_rate = get_ordinary_hourly_rate(
                 BASE_WEEKLY_RATE, worker.casual_loading_percent
             )
+            wage_allowance = shift.wage_allowance_costs_by_worker.get(wid, 0.0)
+            expense_allowance = shift.expense_allowance_costs_by_worker.get(wid, 0.0)
+            gross_with_allowances = result["gross_pay"] + wage_allowance + expense_allowance
             if not shift_worker_results:
                 first_day_type = result["day_type"]
 
@@ -235,7 +238,9 @@ async def calculate_shift_roster(request: ShiftRosterRequest):
                     casual_loading_percent=worker.casual_loading_percent,
                     ordinary_hourly_rate=ordinary_hourly_rate,
                     paid_hours=result["paid_hours"],
-                    gross_pay=round(result["gross_pay"], 2),
+                    gross_pay=round(gross_with_allowances, 2),
+                    wage_allowance_cost=round(wage_allowance, 2),
+                    expense_allowance_cost=round(expense_allowance, 2),
                     segments=[
                         ShiftSegment(
                             description=s["description"],
@@ -249,14 +254,14 @@ async def calculate_shift_roster(request: ShiftRosterRequest):
                     warnings=result["warnings"],
                 )
             )
-            shift_cost += result["gross_pay"]
+            shift_cost += gross_with_allowances
             shift_hours += result["paid_hours"]
             all_warnings.extend(result["warnings"])
 
             if wid not in worker_totals_map:
                 worker_totals_map[wid] = {"name": worker.worker_name, "hours": 0.0, "cost": 0.0}
             worker_totals_map[wid]["hours"] += result["paid_hours"]
-            worker_totals_map[wid]["cost"] += result["gross_pay"]
+            worker_totals_map[wid]["cost"] += gross_with_allowances
 
         shifts_out.append(
             ShiftRosterShiftResult(

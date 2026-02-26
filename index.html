@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fair Work Award Calculator – Rates Explorer (Phase 1)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
     <!-- PapaParse for robust CSV parsing -->
     <script
@@ -16,15 +22,28 @@
     <script type="module" src="./src/shift-cost-calculator.js?v=20260226"></script>
   </head>
   <body>
-    <div class="app-container" role="application" aria-label="Fair Work Award calculator – rate explorer">
+    <div class="app-container" role="application" aria-label="Maica Roster Costing Calculator">
       <header class="app-header">
-        <h1>Fair Work Award Calculator</h1>
-        <p>Phase 1 – Explore base and penalty rates from Fair Work MAP CSV exports</p>
-        <nav style="margin-top: 12px;">
-          <a href="./index.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Calculator</a>
-          <a href="./config.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Configuration</a>
-          <a href="./documentation.html" style="color: #3498db; text-decoration: none;">Documentation</a>
-        </nav>
+        <div class="app-header-inner">
+          <div class="app-brand">
+            <img
+              src="./assets/maica-logo.png"
+              alt="Maica logo"
+              class="app-logo"
+            />
+            <div class="app-brand-text">
+              <h1>Maica Roster Costing Calculator</h1>
+              <p>
+                Calculate indicative roster costs based on currently available award data; these are also available natively within the Maica application
+              </p>
+            </div>
+          </div>
+          <nav class="app-nav">
+            <a href="./index.html">Calculator</a>
+            <a href="./config.html">Configuration</a>
+            <a href="./documentation.html">Documentation</a>
+          </nav>
+        </div>
       </header>
 
       <main class="app-content">
@@ -459,64 +478,6 @@
           </details>
         </section>
 
-        <!-- Section 4: Allowances (fully data-driven from CSV) -->
-        <section class="section" aria-labelledby="section-allowances-heading">
-          <details class="section-details" open>
-            <summary class="section-summary">
-              <div class="section-header">
-                <div class="section-title">
-                  <span class="section-title-dot"></span>
-                  <span id="section-allowances-heading">Allowances</span>
-                </div>
-                <div class="section-meta">
-                  <span class="pill">Populated from MAP wage & expense allowance CSVs</span>
-                </div>
-              </div>
-            </summary>
-            <div class="section-body">
-          <div class="form-grid">
-            <div class="form-group">
-              <div class="form-label-row">
-                <label for="allowanceType">Wage allowances for selected award</label>
-                <span id="wage-allowance-count" class="options-count">(0 available)</span>
-              </div>
-              <select
-                id="allowanceType"
-                class="form-select"
-                multiple
-                size="6"
-                aria-describedby="wage-allowances-help"
-                disabled
-              >
-                <option value="">Select award first</option>
-              </select>
-              <span id="wage-allowances-help" class="help-text">
-                Options are loaded from <code>map-wage-allowance-export-2025.csv</code> for the chosen award.
-              </span>
-            </div>
-
-            <div class="form-group">
-              <div class="form-label-row">
-                <label for="expenseAllowanceType">Expense allowances for selected award</label>
-                <span id="expense-allowance-count" class="options-count">(0 available)</span>
-              </div>
-              <select
-                id="expenseAllowanceType"
-                class="form-select"
-                multiple
-                size="6"
-                aria-describedby="expense-allowances-help"
-                disabled
-              >
-                <option value="">Select award first</option>
-              </select>
-              <span id="expense-allowances-help" class="help-text">
-                Options are loaded from <code>map-expense-allowance-export-2025.csv</code> for the chosen award.
-              </span>
-            </div>
-          </div>
-          </details>
-        </section>
       </main>
     </div>
   </body>

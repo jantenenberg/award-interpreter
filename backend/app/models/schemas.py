@@ -154,6 +154,8 @@ class ShiftRosterShift(BaseModel):
     is_public_holiday: bool = False
     kms: float = 0
     worker_ids: list[str]     # references ShiftRosterWorker.worker_id
+    wage_allowance_costs_by_worker: dict[str, float] = Field(default_factory=dict)
+    expense_allowance_costs_by_worker: dict[str, float] = Field(default_factory=dict)
 
 
 class ShiftRosterRequest(BaseModel):
@@ -172,6 +174,8 @@ class ShiftWorkerResult(BaseModel):
     ordinary_hourly_rate: float
     paid_hours: float
     gross_pay: float
+    wage_allowance_cost: float = 0.0
+    expense_allowance_cost: float = 0.0
     segments: list[ShiftSegment]
     warnings: list[str]
 

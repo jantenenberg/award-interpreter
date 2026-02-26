@@ -5,6 +5,10 @@
  */
 
 import { getDataIndexes, subscribeToData } from './data-loader.js';
+import {
+  calculateWageAllowanceCost,
+  calculateExpenseAllowanceCost,
+} from './lib/allowance-cost.js';
 
 const API_BASE = 'https://award-interpreter-production.up.railway.app';
 let resourceCounter = 0;
@@ -157,6 +161,14 @@ function createResourceRow(resourceId) {
           <option value="">Select award and rate type first</option>
         </select>
         <span class="help-text">Populated after you choose an award and employee rate type.</span>
+        <label class="field-label">Wage allowances</label>
+        <select class="form-select rc-wage-allowances" multiple size="4" disabled>
+          <option value="">Select award first</option>
+        </select>
+        <label class="field-label">Expense allowances</label>
+        <select class="form-select rc-expense-allowances" multiple size="4" disabled>
+          <option value="">Select award first</option>
+        </select>
       </div>
 
     </div>
@@ -168,6 +180,8 @@ function createResourceRow(resourceId) {
   const classSel = row.querySelector('.rc-classification');
   const classCount = row.querySelector('.rc-class-count');
   const loadingGroup = row.querySelector('.rc-loading-group');
+  const wageAllowSel = row.querySelector('.rc-wage-allowances');
+  const expenseAllowSel = row.querySelector('.rc-expense-allowances');
   const removeBtn = row.querySelector('.rc-remove');
 
   // Award search filter
@@ -187,7 +201,36 @@ function createResourceRow(resourceId) {
     const selected = awardSel.options[awardSel.selectedIndex];
     awardSearch.value = selected.value ? selected.text : '';
     refreshClassifications();
+    refreshAllowances();
   });
+
+  function refreshAllowances() {
+    const { allowancesByAward } = getDataIndexes();
+    const entry = allowancesByAward.get(awardSel.value) || { wage: [], expense: [] };
+
+    function fill(selectEl, rows, emptyLabel) {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      if (!rows || rows.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = emptyLabel;
+        selectEl.appendChild(opt);
+        selectEl.disabled = true;
+        return;
+      }
+      selectEl.disabled = false;
+      rows.forEach((a, idx) => {
+        const opt = document.createElement('option');
+        opt.value = String(idx);
+        opt.textContent = a.allowance || a.type || `Allowance ${idx + 1}`;
+        selectEl.appendChild(opt);
+      });
+    }
+
+    fill(wageAllowSel, entry.wage, 'No wage allowances for this award');
+    fill(expenseAllowSel, entry.expense, 'No expense allowances for this award');
+  }
 
   function refreshClassifications() {
     const awardCode = awardSel.value;
@@ -206,10 +249,12 @@ function createResourceRow(resourceId) {
       classSel.disabled = true;
       classCount.textContent = '(0 options)';
     }
-    if (rateTypeSel.value === 'CA') {
-      loadingGroup.removeAttribute('hidden');
-    } else {
-      loadingGroup.setAttribute('hidden', '');
+    if (loadingGroup) {
+      if (rateTypeSel.value === 'CA') {
+        loadingGroup.removeAttribute('hidden');
+      } else {
+        loadingGroup.setAttribute('hidden', '');
+      }
     }
   }
 
@@ -262,6 +307,9 @@ function collectPayload() {
 
   const workers = [];
   const workerIds = [];
+   // Per-worker allowance cost maps sent to backend
+  const wageAllowanceCostsByWorker = {};
+  const expenseAllowanceCostsByWorker = {};
 
   document.querySelectorAll('#scResources .resource-row').forEach(row => {
     const classVal = row.querySelector('.rc-classification').value;
@@ -276,15 +324,67 @@ function collectPayload() {
     } catch { return; }
 
     const wId = row.dataset.resourceId;
+    const awardCode = row.querySelector('.rc-award').value || 'MA000004';
+    const employmentType = row.querySelector('.rc-rate-type').value || 'CA';
+
+    // Approximate paid hours for allowances (apply 3hr minimum for casual)
+    const rawHours = Math.max(0, durationHours - (breakMinutes / 60));
+    const paidHoursForAllowances =
+      employmentType === 'CA' && rawHours > 0 && rawHours < 3 ? 3 : rawHours;
+
+    // Calculate per-worker allowance costs
+    const { allowancesByAward, classificationsByAward } = getDataIndexes();
+    const allowanceEntry = allowancesByAward.get(awardCode) || { wage: [], expense: [] };
+    const allClassRows = classificationsByAward.get(awardCode) || [];
+    const classificationRow = allClassRows.find(
+      r =>
+        r.classification === classification &&
+        Number(r.classificationLevel) === Number(classificationLevel)
+    ) || null;
+
+    const wageSel = row.querySelector('.rc-wage-allowances');
+    const expenseSel = row.querySelector('.rc-expense-allowances');
+
+    let wageCost = 0;
+    if (wageSel && !wageSel.disabled && allowanceEntry.wage) {
+      Array.from(wageSel.selectedOptions).forEach(opt => {
+        const idx = parseInt(opt.value, 10);
+        const allowance = allowanceEntry.wage[idx];
+        if (!allowance) return;
+        const c = calculateWageAllowanceCost(
+          allowance,
+          classificationRow,
+          paidHoursForAllowances,
+          null
+        );
+        if (c) wageCost += c;
+      });
+    }
+
+    let expenseCost = 0;
+    if (expenseSel && !expenseSel.disabled && allowanceEntry.expense) {
+      Array.from(expenseSel.selectedOptions).forEach(opt => {
+        const idx = parseInt(opt.value, 10);
+        const allowance = allowanceEntry.expense[idx];
+        if (!allowance) return;
+        const c = calculateExpenseAllowanceCost(allowance, 0);
+        if (c) expenseCost += c;
+      });
+    }
+
+    if (wageCost) wageAllowanceCostsByWorker[wId] = (wageAllowanceCostsByWorker[wId] || 0) + wageCost;
+    if (expenseCost) expenseAllowanceCostsByWorker[wId] =
+      (expenseAllowanceCostsByWorker[wId] || 0) + expenseCost;
+
     workers.push({
       worker_id: wId,
       worker_name: row.querySelector('.rc-name').value.trim() || `Resource ${wId}`,
-      award_code: row.querySelector('.rc-award').value || 'MA000004',
-      employment_type: row.querySelector('.rc-rate-type').value || 'CA',
+      award_code: awardCode,
+      employment_type: employmentType,
       classification,
       classification_level: classificationLevel,
       casual_loading_percent:
-        row.querySelector('.rc-rate-type').value === 'CA'
+        employmentType === 'CA'
           ? parseFloat(row.querySelector('.rc-loading').value) || 25
           : 0,
     });
@@ -302,6 +402,8 @@ function collectPayload() {
       is_public_holiday: isPublicHoliday,
       kms: 0,
       worker_ids: workerIds,
+      wage_allowance_costs_by_worker: wageAllowanceCostsByWorker,
+      expense_allowance_costs_by_worker: expenseAllowanceCostsByWorker,
     }],
   };
 }
@@ -327,6 +429,7 @@ function renderResult(data) {
     </div>`;
 
   shift.workers.forEach(worker => {
+    const workerTotal = (worker.gross_pay_with_allowances ?? worker.gross_pay);
     html += `
       <details class="result-resource-block">
         <summary class="result-resource-summary">
@@ -337,7 +440,7 @@ function renderResult(data) {
               ${worker.employment_type} · Level ${worker.classification_level} · ${worker.casual_loading_percent}% loading
             </span>
           </span>
-          <span class="result-resource-cost">${fmt(worker.gross_pay)}</span>
+          <span class="result-resource-cost">${fmt(workerTotal)}</span>
         </summary>
         <div class="result-resource-detail">
           ${segmentTableHtml(worker.segments)}
@@ -347,17 +450,84 @@ function renderResult(data) {
       </details>`;
   });
 
+  const shiftTotal = shift.shift_total_cost_with_allowances ?? shift.shift_total_cost;
   html += `
     <div class="result-shift-total">
       <span>Shift total</span>
-      <span>${fmt(shift.shift_total_cost)}</span>
+      <span>${fmt(shiftTotal)}</span>
     </div>
     <div class="result-shift-hours">
       <span>Total hours</span>
       <span>${Number(shift.shift_total_hours).toFixed(1)} hrs</span>
     </div>`;
 
+  const overallTotal = data.total_cost_with_allowances ?? data.total_cost;
+  if (overallTotal != null) {
+    html += `<div class="result-grand-total">
+      Total: ${fmt(overallTotal)}
+      &nbsp;|&nbsp; ${Number(data.total_hours ?? shift.shift_total_hours).toFixed(1)} hours
+    </div>`;
+  }
+
   panel.innerHTML = html;
+}
+
+// --- Allowances integration -------------------------------------------------
+
+function getSelectedAllowancesForWorker(workerId) {
+  const row = document.querySelector(`#scResources .resource-row[data-resource-id="${workerId}"]`);
+  if (!row) return { wage: [], expense: [] };
+
+  const { allowancesByAward } = getDataIndexes();
+  const awardCode = row.querySelector('.rc-award')?.value || '';
+  const entry = (awardCode && allowancesByAward.get(awardCode)) || { wage: [], expense: [] };
+
+  function collect(selectEl, rows) {
+    if (!selectEl || !rows) return [];
+    const indices = Array.from(selectEl.selectedOptions)
+      .map(opt => parseInt(opt.value, 10))
+      .filter(Number.isFinite);
+    return indices.map(i => rows[i]).filter(Boolean);
+  }
+
+  const wage = collect(row.querySelector('.rc-wage-allowances'), entry.wage);
+  const expense = collect(row.querySelector('.rc-expense-allowances'), entry.expense);
+  return { wage, expense };
+}
+
+function applyAllowancesToResult(data) {
+  if (!data || !data.shifts || data.shifts.length === 0) return;
+  const shift = data.shifts[0];
+
+  let extraTotal = 0;
+
+  shift.workers.forEach(worker => {
+    const { wage, expense } = getSelectedAllowancesForWorker(worker.worker_id);
+    const paidHours = worker.paid_hours ?? 0;
+    const hourlyRate = worker.ordinary_hourly_rate ?? 0;
+    const shiftKms = shift.kms ?? 0; // currently always 0 in this calculator
+
+    let wageCost = 0;
+    wage.forEach(a => {
+      const c = calculateWageAllowanceCost(a, null, paidHours, hourlyRate);
+      if (c) wageCost += c;
+    });
+
+    let expenseCost = 0;
+    expense.forEach(a => {
+      const c = calculateExpenseAllowanceCost(a, shiftKms);
+      if (c) expenseCost += c;
+    });
+
+    const allowancesTotal = wageCost + expenseCost;
+    worker.wage_allowance_cost = wageCost;
+    worker.expense_allowance_cost = expenseCost;
+    worker.gross_pay_with_allowances = (worker.gross_pay ?? 0) + allowancesTotal;
+    extraTotal += allowancesTotal;
+  });
+
+  shift.shift_total_cost_with_allowances = (shift.shift_total_cost ?? 0) + extraTotal;
+  data.total_cost_with_allowances = (data.total_cost ?? 0) + extraTotal;
 }
 
 // ─── Calculate ───────────────────────────────────────────────────────────────
@@ -399,6 +569,7 @@ async function onCalculate() {
       throw new Error(`API error ${res.status}: ${err}`);
     }
     const data = await res.json();
+    applyAllowancesToResult(data);
     renderResult(data);
   } catch (err) {
     panel.innerHTML = `<p class="error-text">Error: ${err.message}</p>`;
