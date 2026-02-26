@@ -126,6 +126,57 @@ body {
   margin: 0;
 }
 
+/* Collapsible main sections (Award, Classification, Rates, Shift Cost, Allowances) */
+.section-details {
+  margin: 0;
+  padding: 0;
+}
+
+.section-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0;
+  margin-bottom: 0;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.section-summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 8px;
+  flex-shrink: 0;
+  border-left: 6px solid #667eea;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transition: transform 0.2s ease;
+}
+
+.section-details[open] .section-summary::before {
+  transform: rotate(90deg);
+}
+
+.section-summary .section-header {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.section-summary:hover .section-header .section-title {
+  color: #1a202c;
+}
+
+.section-body {
+  padding-top: 16px;
+}
+
 .collapsible-content {
   padding: 0 16px 16px;
   border-top: 1px solid #e2e8f0;
@@ -1075,106 +1126,179 @@ body {
   border-bottom: 1px solid #f0f0f0;
 }
 
-/* ── Calculator 2: Shift Cost ───────────────────────── */
+/* ── Calculator 2: Shift Cost Calculator ───────────── */
 
 .shift-cost-shift-details {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 20px;
+  align-items: start;
 }
 
-.shift-cost-shift-details .form-group,
-.resource-row-fields .form-group {
+.form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 120px;
+  gap: 6px;
 }
 
 .form-group-checkbox {
   justify-content: flex-end;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
 }
 
-.form-group-action {
-  justify-content: flex-end;
-  padding-bottom: 2px;
-}
-
-.shift-cost-shift-details .form-label,
-.resource-row-fields .form-label {
-  font-size: 0.82rem;
+.form-label {
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #555;
+  color: #333;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 400;
+}
+
+/* Resources header */
+.shift-cost-resources-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
 }
 
 .subsection-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #34495e;
+}
+
+.shift-cost-actions {
+  margin-top: 24px;
+}
+
+/* Resource row — matches section card style */
+.resource-row {
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.resource-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f4f6f9;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.resource-row-number {
   font-size: 0.9rem;
   font-weight: 600;
   color: #34495e;
 }
 
-.shift-cost-resources-header {
+.btn-link {
+  background: none;
+  border: none;
+  color: #c0392b;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  background: #fff0f0;
+}
+
+.btn-link:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.resource-row-body {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.2fr minmax(220px, 1.5fr);
+  gap: 20px;
+  padding: 16px;
+  align-items: start;
+}
+
+/* Prevent long classification text from overflowing */
+.resource-row-body .resource-field-group select.form-select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Casual loading group (inside Employee rate type group): ensure visible when not hidden */
+.rc-loading-group[hidden] {
+  display: none !important;
+}
+
+.rc-loading-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+@media (max-width: 900px) {
+  .resource-row-body {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .resource-row-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Field group — matches existing form style */
+.resource-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin: 0 0 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  gap: 6px;
 }
 
-.shift-cost-actions {
-  margin: 20px 0 0;
+.badge-count {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.78rem;
 }
 
-/* Resource row */
-.resource-row {
-  background: #f8f9fa;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 10px;
-}
-
-.resource-row-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.resource-row-fields .form-group {
-  flex: 1;
-  min-width: 130px;
-}
-
-.btn-danger {
-  background: #fff0f0;
-  color: #c0392b;
-  border: 1px solid #c0392b;
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.btn-danger:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.field-help {
+  font-size: 0.78rem;
+  color: #888;
+  font-style: italic;
+  margin: 0;
+  line-height: 1.4;
 }
 
 /* Result panel */
@@ -1184,6 +1308,7 @@ body {
   color: white;
   border-radius: 8px 8px 0 0;
   font-size: 0.95rem;
+  margin-top: 16px;
 }
 
 .result-resource-block {
@@ -1200,6 +1325,7 @@ body {
   cursor: pointer;
   list-style: none;
   user-select: none;
+  background: white;
 }
 
 .result-resource-summary::-webkit-details-marker { display: none; }
@@ -1217,13 +1343,15 @@ details[open] .result-resource-arrow {
 
 .result-resource-name {
   flex: 1;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .result-resource-meta {
   font-size: 0.8rem;
   color: #777;
-  margin-left: 8px;
+  font-weight: 400;
+  margin-left: 6px;
 }
 
 .result-resource-cost {
@@ -1233,29 +1361,33 @@ details[open] .result-resource-arrow {
 }
 
 .result-resource-detail {
-  padding: 8px 16px 14px 36px;
+  padding: 10px 16px 16px 36px;
   background: #fafafa;
-}
-
-.result-shift-total,
-.result-shift-hours {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border: 1px solid #e0e0e0;
-  border-top: none;
-  font-weight: 600;
+  border-top: 1px solid #f0f0f0;
 }
 
 .result-shift-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
   background: #f0f4f8;
-  font-size: 1rem;
+  border: 1px solid #e0e0e0;
+  border-top: 2px solid #34495e;
   border-radius: 0 0 8px 8px;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 .result-shift-hours {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
   background: #f8f9fa;
-  font-size: 0.9rem;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  font-size: 0.88rem;
   color: #555;
 }
 
@@ -1269,7 +1401,7 @@ details[open] .result-resource-arrow {
 
 .segment-table th {
   background: #ecf0f1;
-  padding: 6px 10px;
+  padding: 7px 10px;
   text-align: left;
   font-weight: 600;
   color: #34495e;
@@ -1277,7 +1409,7 @@ details[open] .result-resource-arrow {
 }
 
 .segment-table td {
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -1291,20 +1423,4 @@ details[open] .result-resource-arrow {
   color: #c0392b;
   font-size: 0.9rem;
   padding: 8px 0;
-}
-
-/* Resource row award search */
-.rc-award-search {
-  margin-bottom: 4px;
-}
-
-.rc-award-search + select {
-  margin-top: 0;
-}
-
-.options-count {
-  font-weight: 400;
-  color: #888;
-  font-size: 0.78rem;
-  margin-left: 4px;
 }

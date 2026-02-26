@@ -94,90 +94,95 @@ function createResourceRow(resourceId) {
   row.className = 'resource-row';
   row.dataset.resourceId = resourceId;
 
-  // Build award options from the same data source as the main dropdowns
   const awardOptions = buildAwardOptions();
+  const awardsByCode = getDataIndexes().awardsByCode;
+  const totalAwards = awardsByCode ? awardsByCode.size : 0;
 
   row.innerHTML = `
-    <div class="resource-row-fields">
-      <div class="form-group">
-        <label class="form-label">Name</label>
-        <input type="text" class="form-input rc-name"
-               placeholder="Resource name" />
+    <div class="resource-row-header">
+      <span class="resource-row-number">Resource ${resourceId}</span>
+      <button class="btn btn-link rc-remove" type="button">Remove</button>
+    </div>
+
+    <div class="resource-row-body">
+
+      <div class="resource-field-group">
+        <label class="field-label">
+          Name
+        </label>
+        <input type="text" class="form-control rc-name" placeholder="Resource name" />
       </div>
 
-      <div class="form-group">
-        <label class="form-label">
+      <div class="resource-field-group">
+        <label class="field-label">
           Award
-          <span class="rc-award-count options-count"></span>
+          <span class="options-count">(${totalAwards} options)</span>
         </label>
-        <input type="text" class="form-input rc-award-search"
-               placeholder="Type to search awards…" />
-        <select class="form-input rc-award" size="1">
-          <option value="">Select award</option>
+        <input type="text" class="form-control rc-award-search"
+               placeholder="Type to search ${totalAwards}+ awards" autocomplete="off" />
+        <span class="help-text">Start typing an award code or name to filter.</span>
+        <select class="form-select rc-award" size="5">
+          <option value="">Select award (${totalAwards} total)</option>
           ${awardOptions}
         </select>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Employment type</label>
-        <select class="form-input rc-rate-type">
-          <option value="">Select type</option>
+      <div class="resource-field-group">
+        <label class="field-label">
+          Employee rate type
+          <span class="options-count">(4 options)</span>
+        </label>
+        <select class="form-select rc-rate-type">
+          <option value="">Select employment type</option>
           <option value="CA">CA – Casual</option>
           <option value="FT">FT – Full-time</option>
           <option value="PT">PT – Part-time</option>
           <option value="AD">AD – Adult</option>
         </select>
+        <span class="help-text">Classifications are filtered by this code; adult (AD) classifications are also included where applicable.</span>
+        <div class="rc-loading-group" hidden>
+          <label class="field-label">Casual loading %</label>
+          <input type="number" class="form-control rc-loading"
+                 value="25" min="0" max="100" step="1" />
+          <span class="help-text">Applied when weekly base rate is converted to hourly for casual (CA) employees. Default 25%.</span>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">
+      <div class="resource-field-group">
+        <label class="field-label">
           Classification
-          <span class="rc-class-count options-count"></span>
+          <span class="rc-class-count options-count">(0 options)</span>
         </label>
-        <select class="form-input rc-classification" disabled>
-          <option value="">Select award &amp; type first</option>
+        <select class="form-select rc-classification" disabled>
+          <option value="">Select award and rate type first</option>
         </select>
+        <span class="help-text">Populated after you choose an award and employee rate type.</span>
       </div>
 
-      <div class="form-group rc-loading-group" hidden>
-        <label class="form-label">Casual loading %</label>
-        <input type="number" class="form-input rc-loading"
-               value="25" min="0" max="100" step="1" />
-      </div>
-
-      <div class="form-group form-group-action">
-        <button class="btn btn-danger rc-remove" type="button">Remove</button>
-      </div>
     </div>
   `;
 
   const awardSearch = row.querySelector('.rc-award-search');
   const awardSel = row.querySelector('.rc-award');
-  const awardCount = row.querySelector('.rc-award-count');
   const rateTypeSel = row.querySelector('.rc-rate-type');
   const classSel = row.querySelector('.rc-classification');
   const classCount = row.querySelector('.rc-class-count');
   const loadingGroup = row.querySelector('.rc-loading-group');
   const removeBtn = row.querySelector('.rc-remove');
 
-  // Update award count
-  const totalAwards = awardSel.options.length - 1;
-  awardCount.textContent = `(${totalAwards} options)`;
-
-  // Award search filter — same pattern as main award search
+  // Award search filter
   let searchTimer;
   awardSearch.addEventListener('input', () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       const q = awardSearch.value.toLowerCase();
       Array.from(awardSel.options).forEach(opt => {
-        if (!opt.value) return; // keep the placeholder
+        if (!opt.value) return;
         opt.hidden = q.length > 0 && !opt.text.toLowerCase().includes(q);
       });
     }, 120);
   });
 
-  // When award is selected from dropdown, update search box text
   awardSel.addEventListener('change', () => {
     const selected = awardSel.options[awardSel.selectedIndex];
     awardSearch.value = selected.value ? selected.text : '';
@@ -187,35 +192,46 @@ function createResourceRow(resourceId) {
   function refreshClassifications() {
     const awardCode = awardSel.value;
     const rateType = rateTypeSel.value;
-
     if (awardCode && rateType) {
       const opts = buildClassificationOptions(awardCode, rateType);
       classSel.innerHTML = opts
         ? `<option value="">Select classification</option>${opts}`
         : `<option value="">No classifications found</option>`;
       classSel.disabled = false;
-
-      // Update classification count
       const count = classSel.options.length - 1;
-      classCount.textContent = `(${count} options)`;
+      classCount.textContent = `(${count} option${count !== 1 ? 's' : ''})`;
     } else {
-      classSel.innerHTML = '<option value="">Select award &amp; type first</option>';
+      classSel.innerHTML =
+        '<option value="">Select award and rate type first</option>';
       classSel.disabled = true;
-      classCount.textContent = '';
+      classCount.textContent = '(0 options)';
     }
-
-    // Show casual loading only for CA
-    loadingGroup.hidden = rateTypeSel.value !== 'CA';
+    if (rateTypeSel.value === 'CA') {
+      loadingGroup.removeAttribute('hidden');
+    } else {
+      loadingGroup.setAttribute('hidden', '');
+    }
   }
 
   rateTypeSel.addEventListener('change', refreshClassifications);
 
+  // Set initial visibility of casual loading (in case of pre-selection or default)
+  refreshClassifications();
+
   removeBtn.addEventListener('click', () => {
     row.remove();
     updateRemoveButtons();
+    updateResourceNumbers();
   });
 
   return row;
+}
+
+function updateResourceNumbers() {
+  document.querySelectorAll('#scResources .resource-row').forEach((row, i) => {
+    const label = row.querySelector('.resource-row-number');
+    if (label) label.textContent = `Resource ${i + 1}`;
+  });
 }
 
 function updateRemoveButtons() {
@@ -223,6 +239,7 @@ function updateRemoveButtons() {
   rows.forEach(r => {
     r.querySelector('.rc-remove').disabled = rows.length === 1;
   });
+  updateResourceNumbers();
 }
 
 function addResource() {
