@@ -429,7 +429,37 @@ function renderResult(data) {
     </div>`;
 
   shift.workers.forEach(worker => {
-    const workerTotal = (worker.gross_pay_with_allowances ?? worker.gross_pay);
+    const wageAllow = Number(worker.wage_allowance_cost ?? 0);
+    const expenseAllow = Number(worker.expense_allowance_cost ?? 0);
+    const workerTotal = Number(worker.gross_pay ?? 0);
+    const baseWage = workerTotal - wageAllow - expenseAllow;
+
+    let breakdownRows = '';
+    breakdownRows += `
+      <tr>
+        <td>Base wages</td>
+        <td class="result-breakdown-amount">${fmt(baseWage)}</td>
+      </tr>`;
+    if (wageAllow !== 0) {
+      breakdownRows += `
+      <tr>
+        <td>Wage allowances</td>
+        <td class="result-breakdown-amount">${fmt(wageAllow)}</td>
+      </tr>`;
+    }
+    if (expenseAllow !== 0) {
+      breakdownRows += `
+      <tr>
+        <td>Expense allowances</td>
+        <td class="result-breakdown-amount">${fmt(expenseAllow)}</td>
+      </tr>`;
+    }
+    breakdownRows += `
+      <tr class="result-breakdown-total-row">
+        <td>Total</td>
+        <td class="result-breakdown-amount">${fmt(workerTotal)}</td>
+      </tr>`;
+
     html += `
       <details class="result-resource-block">
         <summary class="result-resource-summary">
@@ -444,13 +474,18 @@ function renderResult(data) {
         </summary>
         <div class="result-resource-detail">
           ${segmentTableHtml(worker.segments)}
+          <table class="result-breakdown-table">
+            <tbody>
+              ${breakdownRows}
+            </tbody>
+          </table>
           ${(worker.warnings || []).map(w =>
             `<p class="warning-text">⚠ ${w}</p>`).join('')}
         </div>
       </details>`;
   });
 
-  const shiftTotal = shift.shift_total_cost_with_allowances ?? shift.shift_total_cost;
+  const shiftTotal = shift.shift_total_cost;
   html += `
     <div class="result-shift-total">
       <span>Shift total</span>
@@ -461,7 +496,7 @@ function renderResult(data) {
       <span>${Number(shift.shift_total_hours).toFixed(1)} hrs</span>
     </div>`;
 
-  const overallTotal = data.total_cost_with_allowances ?? data.total_cost;
+  const overallTotal = data.total_cost;
   if (overallTotal != null) {
     html += `<div class="result-grand-total">
       Total: ${fmt(overallTotal)}
@@ -496,38 +531,8 @@ function getSelectedAllowancesForWorker(workerId) {
 }
 
 function applyAllowancesToResult(data) {
-  if (!data || !data.shifts || data.shifts.length === 0) return;
-  const shift = data.shifts[0];
-
-  let extraTotal = 0;
-
-  shift.workers.forEach(worker => {
-    const { wage, expense } = getSelectedAllowancesForWorker(worker.worker_id);
-    const paidHours = worker.paid_hours ?? 0;
-    const hourlyRate = worker.ordinary_hourly_rate ?? 0;
-    const shiftKms = shift.kms ?? 0; // currently always 0 in this calculator
-
-    let wageCost = 0;
-    wage.forEach(a => {
-      const c = calculateWageAllowanceCost(a, null, paidHours, hourlyRate);
-      if (c) wageCost += c;
-    });
-
-    let expenseCost = 0;
-    expense.forEach(a => {
-      const c = calculateExpenseAllowanceCost(a, shiftKms);
-      if (c) expenseCost += c;
-    });
-
-    const allowancesTotal = wageCost + expenseCost;
-    worker.wage_allowance_cost = wageCost;
-    worker.expense_allowance_cost = expenseCost;
-    worker.gross_pay_with_allowances = (worker.gross_pay ?? 0) + allowancesTotal;
-    extraTotal += allowancesTotal;
-  });
-
-  shift.shift_total_cost_with_allowances = (shift.shift_total_cost ?? 0) + extraTotal;
-  data.total_cost_with_allowances = (data.total_cost ?? 0) + extraTotal;
+  // No-op: backend now applies allowance costs and returns them in
+  // wage_allowance_cost / expense_allowance_cost and gross_pay.
 }
 
 // ─── Calculate ───────────────────────────────────────────────────────────────

@@ -1480,6 +1480,28 @@ details[open] .result-resource-arrow {
   border-bottom: 1px solid #f0f0f0;
 }
 
+.result-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 10px;
+}
+
+.result-breakdown-table td {
+  padding: 4px 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.result-breakdown-table tr.result-breakdown-total-row td {
+  font-weight: 600;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+
+.result-breakdown-amount {
+  text-align: right;
+}
+
 .warning-text {
   color: #b45309;
   font-size: 0.85rem;
