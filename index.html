@@ -21,6 +21,7 @@
     <script type="module" src="./src/rate-display.js?v=20250218"></script>
     <script type="module" src="./src/shift-cost-calculator.js?v=20260226"></script>
     <script type="module" src="./src/resource-cost-calculator.js?v=20260226"></script>
+    <script type="module" src="./src/roster-cost-calculator.js?v=20260226"></script>
   </head>
   <body>
     <div class="app-container" role="application" aria-label="Maica Roster Costing Calculator">
@@ -427,6 +428,9 @@
             </summary>
             <div class="section-body">
           <!-- Shift details -->
+          <details class="collapsible-details subsection-collapsible">
+            <summary class="collapsible-summary subsection-summary">Shift details</summary>
+            <div class="collapsible-content">
           <div class="shift-cost-shift-details">
             <div class="form-row">
               <div class="form-group">
@@ -455,15 +459,22 @@
               </div>
             </div>
           </div>
+            </div>
+          </details>
 
           <!-- Resources -->
-          <div class="shift-cost-resources-header">
+          <details class="collapsible-details subsection-collapsible">
+            <summary class="collapsible-summary subsection-summary">Resources on this shift</summary>
+            <div class="collapsible-content">
+            <div class="shift-cost-resources-header">
             <span class="subsection-label">Resources on this shift</span>
             <button class="btn btn-secondary" id="scAddResource" type="button">
               + Add Resource
             </button>
           </div>
           <div id="scResources"></div>
+            </div>
+          </details>
 
           <!-- Calculate -->
           <div class="shift-cost-actions">
@@ -494,6 +505,9 @@
               </div>
             </summary>
             <div class="section-body">
+          <details class="collapsible-details subsection-collapsible">
+            <summary class="collapsible-summary subsection-summary">Resource details</summary>
+            <div class="collapsible-content">
           <div class="resource-row">
             <div class="resource-row-header">
               <span class="resource-row-number">Resource Details</span>
@@ -572,12 +586,19 @@
 
             </div>
           </div>
+            </div>
+          </details>
 
+          <details class="collapsible-details subsection-collapsible">
+            <summary class="collapsible-summary subsection-summary">Shifts</summary>
+            <div class="collapsible-content">
           <div class="rcc-shifts-header">
             <span class="subsection-label">Shifts</span>
             <button class="btn btn-secondary" id="rccAddShift" type="button">+ Add Shift</button>
           </div>
           <div id="rccShifts"></div>
+            </div>
+          </details>
 
           <div class="shift-cost-actions">
             <button class="btn btn-primary" id="rccCalculate" type="button">Calculate Resource Cost</button>
@@ -586,6 +607,56 @@
           <div id="rccResult" class="rate-panel" aria-live="polite" hidden></div>
 
           </div>
+          </details>
+        </section>
+
+        <!-- Calculator 4: Roster Cost Calculator -->
+        <section class="section rc4-section" aria-labelledby="section-roster-cost-heading">
+          <details class="section-details">
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-roster-cost-heading">Roster Cost Calculator</span>
+                </div>
+                <div class="section-meta">
+                  <span class="section-hint">Multiple shifts · multiple resources per shift · cost at every level</span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+          <div class="rc4-section-body">
+          <!-- Roster name -->
+          <div class="rc4-name-row">
+            <label class="field-label" for="rc4RosterName">Roster name</label>
+            <input type="text" id="rc4RosterName" class="form-input"
+                   placeholder="e.g. Week ending 28 Feb 2026" />
+          </div>
+
+          <!-- Shifts -->
+          <details class="collapsible-details subsection-collapsible">
+            <summary class="collapsible-summary subsection-summary">Shifts</summary>
+            <div class="collapsible-content">
+            <div class="rc4-shifts-header">
+            <span class="subsection-label">Shifts</span>
+            <button class="btn btn-secondary" id="rc4AddShift" type="button">+ Add Shift</button>
+          </div>
+          <div id="rc4Shifts"></div>
+            </div>
+          </details>
+
+          <!-- Calculate -->
+          <div class="shift-cost-actions">
+            <button class="btn btn-primary" id="rc4Calculate" type="button">
+              Calculate Roster Cost
+            </button>
+          </div>
+
+          <!-- Result -->
+          <div id="rc4Result" class="rate-panel" aria-live="polite" hidden></div>
+
+          </div>
+            </div>
           </details>
         </section>
 

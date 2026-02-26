@@ -94,7 +94,7 @@ function segmentTableHtml(segments) {
 // ─── Resource row ────────────────────────────────────────────────────────────
 
 function createResourceRow(resourceId) {
-  const row = document.createElement('div');
+  const row = document.createElement('details');
   row.className = 'resource-row';
   row.dataset.resourceId = resourceId;
 
@@ -103,10 +103,10 @@ function createResourceRow(resourceId) {
   const totalAwards = awardsByCode ? awardsByCode.size : 0;
 
   row.innerHTML = `
-    <div class="resource-row-header">
+    <summary class="resource-row-header resource-row-summary">
       <span class="resource-row-number">Resource ${resourceId}</span>
-      <button class="btn btn-link rc-remove" type="button">Remove</button>
-    </div>
+      <button class="btn btn-secondary rc-remove" type="button">Remove</button>
+    </summary>
 
     <div class="resource-row-body">
 
@@ -263,7 +263,9 @@ function createResourceRow(resourceId) {
   // Set initial visibility of casual loading (in case of pre-selection or default)
   refreshClassifications();
 
-  removeBtn.addEventListener('click', () => {
+  removeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     row.remove();
     updateRemoveButtons();
     updateResourceNumbers();

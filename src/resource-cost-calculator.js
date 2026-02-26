@@ -233,7 +233,7 @@ function createShiftRow(shiftId) {
         </label>
       </div>
       <div class="form-group form-group-action">
-        <button class="btn btn-link rcc-remove-shift" type="button">Remove</button>
+        <button class="btn btn-secondary rcc-remove-shift" type="button">Remove</button>
       </div>
     </div>
   `;

@@ -138,6 +138,8 @@ body {
   height: 8px;
   border-radius: 50%;
   background: var(--brand-blue);
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .section-meta {
@@ -191,6 +193,25 @@ body {
   align-items: center;
   gap: 8px;
   margin: 0;
+}
+
+/* Subsection collapsibles (Shifts, Resources, Shift details, Resource details) */
+.subsection-collapsible {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.subsection-collapsible .subsection-summary {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: 10px 14px;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.subsection-collapsible .collapsible-content {
+  padding: 12px 14px 14px;
 }
 
 /* Collapsible main sections (Award, Classification, Rates, Shift Cost, Allowances) */
@@ -318,7 +339,8 @@ body {
 }
 
 .form-control,
-.form-select {
+.form-select,
+.form-input {
   padding: 9px 12px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -329,7 +351,8 @@ body {
 }
 
 .form-control:focus,
-.form-select:focus {
+.form-select:focus,
+.form-input:focus {
   outline: none;
   border-color: var(--brand-blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
@@ -1260,6 +1283,37 @@ body {
   overflow: hidden;
 }
 
+/* Collapsible resource row: triangle on summary */
+.resource-row-summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.resource-row-summary::-webkit-details-marker {
+  display: none;
+}
+
+.resource-row-summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 8px;
+  flex-shrink: 0;
+  border-left: 6px solid var(--brand-blue);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transition: transform 0.2s ease;
+}
+
+.resource-row[open] .resource-row-summary::before {
+  transform: rotate(90deg);
+}
+
+.resource-row:not([open]) .resource-row-header {
+  border-bottom: none;
+}
+
 .resource-row-header {
   display: flex;
   align-items: center;
@@ -1267,12 +1321,20 @@ body {
   padding: 10px 16px;
   background: #f4f6f9;
   border-bottom: 1px solid #e0e6ed;
+  text-align: left;
 }
 
 .resource-row-number {
   font-size: 0.9rem;
   font-weight: 600;
   color: #34495e;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-row-summary .btn-secondary {
+  flex-shrink: 0;
 }
 
 .btn-link {
@@ -1585,4 +1647,250 @@ details[open] .result-resource-arrow {
   color: #1a6b3c;
   font-size: 0.85rem;
   margin: 4px 0 0;
+}
+
+/* ── Calculator 4: Roster Cost Calculator ───────────── */
+
+.rc4-section {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.rc4-section-body {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.rc4-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.rc4-name-row .form-input {
+  flex: 1;
+  max-width: 480px;
+  min-width: 0;
+}
+
+.rc4-shifts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+}
+
+/* Shift panel — match .resource-row / .rcc-resource-header */
+.rc4-shift-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rc4-shift-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f4f6f9;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+/* Collapsible shift panel: triangle on summary */
+.rc4-shift-summary {
+  cursor: pointer;
+  list-style: none;
+  text-align: left;
+}
+
+.rc4-shift-summary::-webkit-details-marker {
+  display: none;
+}
+
+.rc4-shift-summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 8px;
+  flex-shrink: 0;
+  border-left: 6px solid var(--brand-blue);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transition: transform 0.2s ease;
+}
+
+.rc4-shift-details[open] .rc4-shift-summary::before {
+  transform: rotate(90deg);
+}
+
+.rc4-shift-details:not([open]) .rc4-shift-header {
+  border-bottom: none;
+}
+
+.rc4-shift-content {
+  border-top: 1px solid var(--border);
+}
+
+.rc4-shift-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.rc4-shift-header .btn-secondary {
+  flex-shrink: 0;
+}
+
+.rc4-shift-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.rc4-shift-fields .form-group {
+  min-width: 110px;
+  flex: 1;
+}
+
+/* Resources within shift */
+.rc4-shift-resources-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f4f6f9;
+  border-bottom: 1px solid var(--border);
+}
+
+.rc4-shift-resources {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* RC4 resource row reuses .resource-row and .resource-row-body from Shift Cost */
+.rc4-resource-row {
+  margin-bottom: 16px;
+}
+
+.rc4-resource-row .resource-row-body select.form-select,
+.rc4-resource-row .resource-row-body input.form-control {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.rc4-resource-row .resource-row-body .resource-field-group {
+  min-width: 0;
+}
+
+/* Prevent long option text from overflowing viewport */
+.rc4-resource-row .form-select option,
+.resource-row .form-select option {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Result — align with .rcc-result-header / .result-shift-header */
+.rc4-result-header {
+  padding: 14px 16px;
+  background: var(--brand-navy);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+#rc4Result {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.rc4-result-roster-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.rc4-result-shift-block {
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.rc4-result-shift-header {
+  padding: 10px 16px;
+  background: var(--brand-navy);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rc4-result-resource-totals {
+  border: 1px solid var(--border);
+  border-top: none;
+  padding: 16px;
+  background: var(--surface-muted);
+}
+
+.rc4-result-section-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.rc4-totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rc4-totals-table th {
+  background: #f4f6f9;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.rc4-totals-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rc4-result-roster-total {
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--brand-blue);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.rc4-roster-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--brand-navy);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
 }
