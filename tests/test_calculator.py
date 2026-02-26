@@ -172,3 +172,50 @@ def test_roster_wed_sat_total():
     )
     total = round(wed["gross_pay"] + sat["gross_pay"], 2)
     assert total == 298.69
+
+
+# ---- Extended API tests ----
+
+def test_roster_two_workers():
+    """Roster with two workers, different loading: W1 Wed 5hrs 25% → $165.95, W2 Wed 5hrs 0% → $132.75, total $298.70"""
+    w1 = calculate_shift(
+        shift_date=date(2025, 1, 8),
+        start_time="09:00",
+        duration_hours=5.0,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=25,
+    )
+    w2 = calculate_shift(
+        shift_date=date(2025, 1, 8),
+        start_time="09:00",
+        duration_hours=5.0,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=0,
+    )
+    assert w1["gross_pay"] == 165.95
+    assert w2["gross_pay"] == 132.75
+    total = round(w1["gross_pay"] + w2["gross_pay"], 2)
+    assert total == 298.70
+
+
+def test_worker_classification_penalty_count():
+    """PENALTY_MULTIPLIERS should have 7 keys"""
+    from app.services.award_rules import PENALTY_MULTIPLIERS
+    assert len(PENALTY_MULTIPLIERS) == 7
+
+
+def test_roster_minimum_engagement_warning():
+    """Worker with 1hr Saturday shift → padded to 3hrs, warning present"""
+    result = calculate_shift(
+        shift_date=date(2025, 1, 11),
+        start_time="09:00",
+        duration_hours=1.0,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=0,
+    )
+    assert result["paid_hours"] == 3.0
+    assert any("Minimum casual engagement" in w for w in result["warnings"])
+    assert result["gross_pay"] == 99.57

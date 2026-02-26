@@ -63,3 +63,72 @@ class HealthResponse(BaseModel):
     status: str
     environment: str
     rates_version: str
+
+
+# --- Worker classification lookup ---
+
+class PenaltyRateDetail(BaseModel):
+    description: str
+    type: str                    # "Detail" or "Summary"
+    rate_multiplier: float
+    calculated_rate: float
+    unit: str                    # "Percent" or "Hour"
+    clause: Optional[str] = None
+
+
+class WorkerClassificationResponse(BaseModel):
+    award_code: str
+    award_name: str
+    employment_type: str
+    classification: str
+    classification_level: int
+    base_rate: float
+    base_rate_type: str          # "Weekly" or "Hourly"
+    calculated_rate: float
+    calculated_rate_type: str    # "Hourly"
+    casual_loading_percent: float
+    clauses: list[str]
+    penalty_rates: list[PenaltyRateDetail]
+    rates_version: str
+
+
+# --- Roster calculation ---
+
+class WorkerShiftRequest(BaseModel):
+    worker_id: str
+    worker_name: str
+    award_code: str = "MA000004"
+    employment_type: str = "CA"
+    classification: str = "Retail Employee Level 1"
+    classification_level: int = 1
+    casual_loading_percent: float = Field(default=25, ge=0, le=100)
+    shifts: list[ShiftRequest]
+
+
+class WorkerShiftResponse(BaseModel):
+    worker_id: str
+    worker_name: str
+    award_code: str
+    employment_type: str
+    classification: str
+    classification_level: int
+    casual_loading_percent: float
+    ordinary_hourly_rate: float
+    total_cost: float
+    total_hours: float
+    shifts: list[ShiftResponse]
+    warnings: list[str]
+
+
+class RosterRequest(BaseModel):
+    roster_name: str
+    workers: list[WorkerShiftRequest]
+
+
+class RosterResponse(BaseModel):
+    roster_name: str
+    rates_version: str
+    total_cost: float
+    total_hours: float
+    workers: list[WorkerShiftResponse]
+    warnings: list[str]
