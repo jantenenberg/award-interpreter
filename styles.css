@@ -521,6 +521,272 @@ body {
   border-bottom: none;
 }
 
+/* Worker panel */
+.worker-panel {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+.worker-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.worker-panel-header input[type="text"] {
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid #0066cc;
+  background: transparent;
+  padding: 4px 0;
+  flex: 1;
+}
+
+.worker-panel .worker-dropdowns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.worker-panel .worker-dropdowns .form-select,
+.worker-panel .worker-dropdowns .worker-casual-wrap {
+  min-width: 0;
+}
+
+.worker-panel .worker-dropdowns .form-select {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-remove-worker {
+  background: #fff0f0;
+  color: #cc0000;
+  border: 1px solid #cc0000;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-remove-worker:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.roster-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.roster-summary-table th {
+  background: #34495e;
+  color: white;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.roster-summary-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.roster-summary-table tr.total-row {
+  font-weight: 700;
+  background: #f0f4f8;
+  border-top: 2px solid #34495e;
+}
+
+/* Shift-first roster */
+/* Shift-first roster — aligned with .section and roster-controls */
+.shift-roster-shifts-block {
+  margin-bottom: 16px;
+}
+
+.shift-roster-shifts-block .form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#shift-roster-section .form-group input[type="text"] {
+  max-width: 400px;
+  padding: 9px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.shift-roster-shift-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+.shift-roster-shift-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.shift-roster-inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.shift-roster-inline-label .roster-input {
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+}
+
+.shift-roster-workers-on-shift {
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.shift-roster-workers-heading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #34495e;
+}
+
+.shift-roster-worker-rows {
+  margin-top: 8px;
+}
+
+.shift-roster-worker-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 2fr 80px 80px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.shift-roster-worker-row .shift-roster-casual-wrap input {
+  width: 60px;
+}
+
+/* Result rendering — structure like attached image */
+.shift-roster-result-shift {
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.shift-roster-result-shift-header {
+  background: #c45c26;
+  color: white;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.shift-roster-result-worker {
+  border-bottom: 1px solid #eee;
+}
+
+.shift-roster-result-worker summary {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px 8px 24px;
+  cursor: pointer;
+  list-style: none;
+  gap: 8px;
+}
+
+.shift-roster-result-worker summary::-webkit-details-marker {
+  display: none;
+}
+
+.shift-roster-result-worker summary::before {
+  content: '▶';
+  font-size: 0.65rem;
+  color: #718096;
+  transition: transform 0.2s;
+}
+
+.shift-roster-result-worker[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.shift-roster-result-worker-connector {
+  color: #2d3748;
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.shift-roster-worker-name {
+  flex: 1;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.shift-roster-worker-cost {
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.shift-roster-result-worker-detail {
+  padding: 0 16px 12px 40px;
+}
+
+.shift-roster-result-worker-detail .status-warning {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 8px 10px;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+
+.shift-roster-shift-total {
+  background: #f0f4f8;
+  padding: 10px 16px;
+  font-weight: 700;
+  text-align: right;
+  color: #c45c26;
+}
+
+.shift-roster-shift-total .rate-value,
+.shift-roster-grand-total .rate-value {
+  color: #2e7d32;
+}
+
+.shift-roster-grand-total {
+  background: #c45c26;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: right;
+  margin-top: 16px;
+}
+
+.shift-roster-grand-total .rate-value {
+  color: #a7f3d0;
+}
+
 .empty-state {
   padding: 10px 12px;
   border-radius: 6px;
@@ -558,3 +824,487 @@ body {
   }
 }
 
+/* ── Section subtitle (hint) ─────────────────────────── */
+.section-hint {
+  display: block;
+  font-size: 0.9rem;
+  color: #718096;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* ── Shared: worker rows ─────────────────────────────── */
+.shift-cost-worker-row,
+.roster-worker-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 2fr 80px 80px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* ── Section 2: Shift Cost Calculator ───────────────── */
+.shift-cost-shift-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.shift-cost-shift-row label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.shift-cost-workers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+/* ── Section 3: Roster Cost Calculator ──────────────── */
+.roster-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.roster-name-row input {
+  flex: 1;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.roster-step {
+  margin-bottom: 24px;
+}
+
+.roster-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.roster-shift-panel {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+.roster-shift-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.roster-shift-inputs label {
+  font-size: 0.8rem;
+  color: #666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.roster-shift-worker-assignments {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.roster-shift-worker-assignments .assignments-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  margin-right: 4px;
+}
+
+.roster-shift-worker-assignments label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* ── Shared: result rendering ───────────────────────── */
+.result-roster-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #34495e;
+  margin-bottom: 16px;
+}
+
+.result-shift-block {
+  margin-bottom: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.result-shift-header {
+  background: #34495e;
+  color: white;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.result-worker-detail {
+  border-bottom: 1px solid #eee;
+}
+
+.result-worker-detail summary {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  list-style: none;
+  gap: 8px;
+  user-select: none;
+}
+
+.result-worker-detail summary::-webkit-details-marker { display: none; }
+
+.result-worker-detail summary::before {
+  content: '▶';
+  font-size: 0.7rem;
+  color: #999;
+  transition: transform 0.2s;
+}
+
+.result-worker-detail[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.result-worker-name { flex: 1; font-weight: 500; }
+.result-worker-cost { font-weight: 700; color: #2e7d32; }
+
+.result-worker-segments {
+  padding: 8px 16px 12px 32px;
+}
+
+.result-shift-total {
+  background: #f0f4f8;
+  padding: 10px 16px;
+  font-weight: 600;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.result-worker-totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.result-worker-totals-table th {
+  background: #34495e;
+  color: white;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.result-worker-totals-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.result-worker-totals-table tr.grand-total {
+  font-weight: 700;
+  background: #f0f4f8;
+  border-top: 2px solid #34495e;
+}
+
+.result-grand-total {
+  background: #34495e;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: right;
+  margin-top: 16px;
+}
+
+.warning-text {
+  color: #b45309;
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.segment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.segment-table th {
+  background: #f0f4f8;
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: #34495e;
+}
+
+.segment-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ── Calculator 2: Shift Cost ───────────────────────── */
+
+.shift-cost-shift-details {
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.shift-cost-shift-details .form-group,
+.resource-row-fields .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.form-group-checkbox {
+  justify-content: flex-end;
+  padding-bottom: 8px;
+}
+
+.form-group-action {
+  justify-content: flex-end;
+  padding-bottom: 2px;
+}
+
+.shift-cost-shift-details .form-label,
+.resource-row-fields .form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.subsection-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #34495e;
+}
+
+.shift-cost-resources-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.shift-cost-actions {
+  margin: 20px 0 0;
+}
+
+/* Resource row */
+.resource-row {
+  background: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.resource-row-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.resource-row-fields .form-group {
+  flex: 1;
+  min-width: 130px;
+}
+
+.btn-danger {
+  background: #fff0f0;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Result panel */
+.result-shift-header {
+  padding: 12px 16px;
+  background: #34495e;
+  color: white;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.95rem;
+}
+
+.result-resource-block {
+  border-left: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.result-resource-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.result-resource-summary::-webkit-details-marker { display: none; }
+
+.result-resource-arrow {
+  font-size: 0.65rem;
+  color: #999;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+details[open] .result-resource-arrow {
+  transform: rotate(90deg);
+}
+
+.result-resource-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.result-resource-meta {
+  font-size: 0.8rem;
+  color: #777;
+  margin-left: 8px;
+}
+
+.result-resource-cost {
+  font-weight: 700;
+  color: #2e7d32;
+  font-size: 1rem;
+}
+
+.result-resource-detail {
+  padding: 8px 16px 14px 36px;
+  background: #fafafa;
+}
+
+.result-shift-total,
+.result-shift-hours {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  font-weight: 600;
+}
+
+.result-shift-total {
+  background: #f0f4f8;
+  font-size: 1rem;
+  border-radius: 0 0 8px 8px;
+}
+
+.result-shift-hours {
+  background: #f8f9fa;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Segment table */
+.segment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 8px;
+}
+
+.segment-table th {
+  background: #ecf0f1;
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: #34495e;
+  font-size: 0.82rem;
+}
+
+.segment-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.warning-text {
+  color: #b45309;
+  font-size: 0.85rem;
+  margin: 6px 0 0;
+}
+
+.error-text {
+  color: #c0392b;
+  font-size: 0.9rem;
+  padding: 8px 0;
+}
+
+/* Resource row award search */
+.rc-award-search {
+  margin-bottom: 4px;
+}
+
+.rc-award-search + select {
+  margin-top: 0;
+}
+
+.options-count {
+  font-weight: 400;
+  color: #888;
+  font-size: 0.78rem;
+  margin-left: 4px;
+}

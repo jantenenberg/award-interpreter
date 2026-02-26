@@ -219,3 +219,84 @@ def test_roster_minimum_engagement_warning():
     assert result["paid_hours"] == 3.0
     assert any("Minimum casual engagement" in w for w in result["warnings"])
     assert result["gross_pay"] == 99.57
+
+
+# Test 16 — Shift roster endpoint shape
+def test_shift_roster_two_shifts_two_workers():
+    """Shift roster: two shifts, two workers — verify totals match per-shift and roster."""
+    # Shift 1: Wednesday — both workers
+    w1_shift1 = calculate_shift(
+        shift_date=date(2026, 2, 25),
+        start_time="09:00",
+        duration_hours=5,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=25,
+    )
+    w2_shift1 = calculate_shift(
+        shift_date=date(2026, 2, 25),
+        start_time="09:00",
+        duration_hours=5,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=0,
+    )
+
+    # Shift 2: Saturday — both workers
+    w1_shift2 = calculate_shift(
+        shift_date=date(2026, 2, 28),
+        start_time="09:00",
+        duration_hours=5,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=25,
+    )
+    w2_shift2 = calculate_shift(
+        shift_date=date(2026, 2, 28),
+        start_time="09:00",
+        duration_hours=5,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=0,
+    )
+
+    # Worker totals
+    w1_total = round(w1_shift1["gross_pay"] + w1_shift2["gross_pay"], 2)
+    w2_total = round(w2_shift1["gross_pay"] + w2_shift2["gross_pay"], 2)
+
+    # Shift totals
+    shift1_total = round(w1_shift1["gross_pay"] + w2_shift1["gross_pay"], 2)
+    shift2_total = round(w1_shift2["gross_pay"] + w2_shift2["gross_pay"], 2)
+    roster_total = round(shift1_total + shift2_total, 2)
+
+    assert w1_shift1["gross_pay"] == 165.95   # Wed 25% loading
+    assert w2_shift1["gross_pay"] == 132.75   # Wed 0% loading
+    assert w2_shift2["gross_pay"] == 165.94   # Sat 0% loading
+    assert shift1_total == 298.70
+    assert shift2_total == 373.38  # Sat 25% + Sat 0%
+    assert roster_total == round(298.70 + 373.38, 2) == 672.08
+
+
+# Test 17 — Shift cost: one shift, multiple workers (Shift Cost Calculator use case)
+def test_shift_cost_one_shift_multiple_workers():
+    """One shift, two workers (different casual loading) — shift total = sum of worker costs."""
+    w1 = calculate_shift(
+        shift_date=date(2026, 2, 25),
+        start_time="09:00",
+        duration_hours=5,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=25,
+    )
+    w2 = calculate_shift(
+        shift_date=date(2026, 2, 25),
+        start_time="09:00",
+        duration_hours=5,
+        break_minutes=0,
+        is_public_holiday=False,
+        casual_loading_percent=0,
+    )
+    shift_total = round(w1["gross_pay"] + w2["gross_pay"], 2)
+    assert w1["gross_pay"] == 165.95
+    assert w2["gross_pay"] == 132.75
+    assert shift_total == 298.70

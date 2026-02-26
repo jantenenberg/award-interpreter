@@ -8,13 +8,12 @@
     <!-- PapaParse for robust CSV parsing -->
     <script
       src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"
-      integrity="sha384-HG7m3L5GNyqu7xF2u7ZbE5qZ2jVh63B3dM4bZ6SzdJw3+V0cQ/4Ey0Y2+7xB0+7E"
       crossorigin="anonymous"
     ></script>
     <script type="module" src="./src/data-loader.js?v=20250218"></script>
     <script type="module" src="./src/dropdown-manager.js?v=20250218"></script>
     <script type="module" src="./src/rate-display.js?v=20250218"></script>
-    <script type="module" src="./src/shift-cost-manager.js?v=20250218"></script>
+    <script type="module" src="./src/shift-cost-calculator.js?v=20260226"></script>
   </head>
   <body>
     <div class="app-container" role="application" aria-label="Fair Work Award calculator – rate explorer">
@@ -377,58 +376,67 @@
           </details>
         </section>
 
-        <!-- Section 3b: Roster shift cost calculator -->
-        <section class="section" aria-labelledby="section-shift-heading">
+        <!-- Calculator 2: Shift Cost -->
+        <section class="section" aria-labelledby="section-shift-cost-heading">
           <div class="section-header">
             <div class="section-title">
               <span class="section-title-dot"></span>
-              <span id="section-shift-heading">Roster shift cost calculator</span>
+              <span id="section-shift-cost-heading">Shift Cost Calculator</span>
             </div>
             <div class="section-meta">
-              <span class="pill">Add multiple shifts to cost a roster</span>
+              <span class="section-hint">One shift · multiple resources · cost per resource and shift total</span>
             </div>
           </div>
 
-          <div class="roster-controls">
-            <button id="addShiftBtn" class="btn btn-secondary" type="button">
-              Add shift
-            </button>
-            <button
-              id="calculateShiftBtn"
-              class="btn btn-primary"
-              type="button"
-              disabled
-            >
-              Calculate roster cost
-            </button>
-          </div>
-
-          <div class="roster-shifts-wrapper" role="region" aria-label="Shifts">
-            <table class="roster-shifts-table" id="rosterShiftsTable">
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Start</th>
-                  <th scope="col">Duration (hrs)</th>
-                  <th scope="col">Break (min)</th>
-                  <th scope="col">Kms</th>
-                  <th scope="col"><span class="sr-only">Remove</span></th>
-                </tr>
-              </thead>
-              <tbody id="rosterShiftsBody">
-                <!-- Rows added dynamically -->
-              </tbody>
-            </table>
-          </div>
-
-          <div id="shiftCostResult" class="rate-panel" aria-live="polite" hidden>
-            <div class="rate-panel-header">
-              <div class="rate-panel-title">Roster cost breakdown</div>
+          <!-- Shift details -->
+          <div class="shift-cost-shift-details">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="scShiftDate">Date</label>
+                <input type="date" id="scShiftDate" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="scShiftStart">Start time</label>
+                <input type="time" id="scShiftStart" class="form-input" value="09:00" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="scShiftDuration">Duration (hrs)</label>
+                <input type="number" id="scShiftDuration" class="form-input"
+                       value="8" min="0.5" step="0.5" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="scShiftBreak">Break (min)</label>
+                <input type="number" id="scShiftBreak" class="form-input"
+                       value="30" min="0" step="5" />
+              </div>
+              <div class="form-group form-group-checkbox">
+                <label class="form-label checkbox-label">
+                  <input type="checkbox" id="scPublicHoliday" />
+                  Public holiday
+                </label>
+              </div>
             </div>
-            <div id="shiftCostSegments" class="shift-cost-segments"></div>
-            <div id="shiftCostTotal" class="shift-cost-total"></div>
-            <div id="shiftCostError" class="status-error" hidden></div>
           </div>
+
+          <!-- Resources -->
+          <div class="shift-cost-resources-header">
+            <span class="subsection-label">Resources on this shift</span>
+            <button class="btn btn-secondary" id="scAddResource" type="button">
+              + Add Resource
+            </button>
+          </div>
+          <div id="scResources"></div>
+
+          <!-- Calculate -->
+          <div class="shift-cost-actions">
+            <button class="btn btn-primary" id="scCalculate" type="button">
+              Calculate Shift Cost
+            </button>
+          </div>
+
+          <!-- Result -->
+          <div id="scResult" class="rate-panel" aria-live="polite" hidden></div>
+
         </section>
 
         <!-- Section 4: Allowances (fully data-driven from CSV) -->
