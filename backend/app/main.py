@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import admin, calculate, rates, health, reference_data
+from app.routers import admin, calculate, rates, health, reference_data, salesforce
 
 app = FastAPI(
     title="Award Interpreter API",
@@ -27,6 +27,7 @@ app.include_router(rates.router)
 app.include_router(calculate.router)
 app.include_router(reference_data.router)
 app.include_router(admin.router)
+app.include_router(salesforce.router)
 
 # Serve existing frontend static files from project root (parent of backend/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

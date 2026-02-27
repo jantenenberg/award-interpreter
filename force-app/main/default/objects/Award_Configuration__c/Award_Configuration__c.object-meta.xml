@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Award Configuration</label>
+    <pluralLabel>Award Configurations</pluralLabel>
+    <nameField>
+        <label>Award Configuration Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>AC-{0000}</displayFormat>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <fields>
+        <fullName>Resource__c</fullName>
+        <label>Resource</label>
+        <type>Lookup</type>
+        <referenceTo>Resource__c</referenceTo>
+        <relationshipName>Award_Configurations</relationshipName>
+        <relationshipLabel>Award Configurations</relationshipLabel>
+        <required>true</required>
+    </fields>
+    <fields>
+        <fullName>Award_Code__c</fullName>
+        <label>Award Code</label>
+        <type>Text</type>
+        <length>20</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Award_Name__c</fullName>
+        <label>Award Name</label>
+        <type>Text</type>
+        <length>255</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Employment_Type__c</fullName>
+        <label>Employment Type</label>
+        <type>Picklist</type>
+        <required>false</required>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value><fullName>FT</fullName><label>Full-time</label><default>false</default></value>
+                <value><fullName>PT</fullName><label>Part-time</label><default>false</default></value>
+                <value><fullName>CA</fullName><label>Casual</label><default>false</default></value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Classification__c</fullName>
+        <label>Classification</label>
+        <type>Text</type>
+        <length>255</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Classification_Level__c</fullName>
+        <label>Classification Level</label>
+        <type>Number</type>
+        <precision>3</precision>
+        <scale>0</scale>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Casual_Loading_Percent__c</fullName>
+        <label>Casual Loading %</label>
+        <type>Number</type>
+        <precision>5</precision>
+        <scale>2</scale>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Effective_Date__c</fullName>
+        <label>Effective Date</label>
+        <type>Date</type>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Ordinary_Hourly_Rate__c</fullName>
+        <label>Ordinary Hourly Rate</label>
+        <type>Currency</type>
+        <precision>8</precision>
+        <scale>4</scale>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Is_Active__c</fullName>
+        <label>Is Active</label>
+        <type>Checkbox</type>
+        <defaultValue>true</defaultValue>
+    </fields>
+    <fields>
+        <fullName>Configured__c</fullName>
+        <label>Configured</label>
+        <type>Checkbox</type>
+        <defaultValue>false</defaultValue>
+    </fields>
+</CustomObject>

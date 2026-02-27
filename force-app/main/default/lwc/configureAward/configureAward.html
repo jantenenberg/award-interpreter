@@ -1,0 +1,133 @@
+<template>
+    <lightning-quick-action-panel header="Configure Award">
+
+        <template if:true={isLoading}>
+            <div class="slds-is-relative slds-m-around_large">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_medium" role="alert">
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+
+            <!-- Resource context banner -->
+            <div class="slds-box slds-box_x-small slds-theme_shade slds-m-bottom_medium context-banner">
+                <span class="slds-text-body_small slds-text-color_weak">Configuring award for </span>
+                <span class="slds-text-body_regular slds-text-title_bold">{resourceName}</span>
+                <template if:true={isAlreadyConfigured}>
+                    <span class="slds-m-left_small slds-badge slds-badge_inverse">Editing existing</span>
+                </template>
+            </div>
+
+            <div class="slds-form slds-form_stacked">
+
+                <!-- Award selection -->
+                <div class="slds-form-element slds-m-bottom_small">
+                    <lightning-combobox
+                        label="Award"
+                        placeholder="Select an award..."
+                        options={awardOptions}
+                        value={selectedAwardCode}
+                        onchange={handleAwardChange}
+                        required>
+                    </lightning-combobox>
+                </div>
+
+                <!-- Employment type -->
+                <div class="slds-form-element slds-m-bottom_small">
+                    <lightning-combobox
+                        label="Employment Type"
+                        placeholder="Select employment type..."
+                        options={employmentTypeOptions}
+                        value={selectedEmploymentType}
+                        onchange={handleEmploymentTypeChange}
+                        required>
+                    </lightning-combobox>
+                </div>
+
+                <!-- Classification — shown after award + type selected -->
+                <template if:true={showClassifications}>
+                    <div class="slds-form-element slds-m-bottom_small">
+                        <lightning-combobox
+                            label="Classification"
+                            placeholder="Select classification..."
+                            options={classificationOptions}
+                            value={selectedClassificationValue}
+                            onchange={handleClassificationChange}
+                            required>
+                        </lightning-combobox>
+                    </div>
+                </template>
+
+                <!-- Casual loading — casual only -->
+                <template if:true={isCasual}>
+                    <div class="slds-form-element slds-m-bottom_small">
+                        <lightning-input
+                            type="number"
+                            label="Casual Loading %"
+                            value={casualLoadingPercent}
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            onchange={handleCasualLoadingChange}
+                            required>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <!-- Effective date -->
+                <div class="slds-form-element slds-m-bottom_small">
+                    <lightning-input
+                        type="date"
+                        label="Effective Date"
+                        value={effectiveDate}
+                        onchange={handleEffectiveDateChange}
+                        required>
+                    </lightning-input>
+                </div>
+
+                <!-- Rate preview -->
+                <template if:true={showRatePreview}>
+                    <div class="slds-box slds-m-top_small slds-m-bottom_medium rate-preview">
+                        <p class="slds-text-title_caps slds-m-bottom_x-small">Rate Preview</p>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col">
+                                <p class="slds-text-body_small slds-text-color_weak">Base Hourly Rate</p>
+                                <p class="slds-text-heading_small">${ordinaryHourlyRate}/hr</p>
+                            </div>
+                            <template if:true={isCasual}>
+                                <div class="slds-col">
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        With {casualLoadingPercent}% Casual Loading
+                                    </p>
+                                    <p class="slds-text-heading_small rate-highlight">${rateWithLoading}/hr</p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+        <div slot="footer">
+            <lightning-button
+                label="Cancel"
+                onclick={handleCancel}
+                class="slds-m-right_x-small">
+            </lightning-button>
+            <lightning-button
+                variant="brand"
+                label="Save Configuration"
+                onclick={handleSave}
+                disabled={isSaveDisabled}>
+            </lightning-button>
+        </div>
+
+    </lightning-quick-action-panel>
+</template>

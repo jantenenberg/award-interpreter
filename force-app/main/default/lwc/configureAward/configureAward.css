@@ -1,0 +1,15 @@
+.context-banner {
+    background: #f4f6f9;
+    border-radius: 6px;
+}
+
+.rate-preview {
+    background: #eaf4fb;
+    border: 1px solid #aed6f1;
+    border-radius: 6px;
+}
+
+.rate-highlight {
+    color: #1a6496;
+    font-weight: 700;
+}
