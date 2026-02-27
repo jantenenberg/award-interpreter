@@ -97,89 +97,14 @@
                     </lightning-icon>
                 </div>
 
-                <!-- Full detail card (always visible, collapses via header toggle) -->
-                <template if:true={classificationExpanded}>
-                <div class="ca-section-body ca-section-body_details">
-                <div class="ca-classification-panel">
-
-                    <template if:true={isCasual}>
-                        <div class="ca-casual-badge-row">
-                            <span class="ca-casual-badge">Casual (includes casual loading in calculated rate)</span>
-                        </div>
-                    </template>
-
-                    <!-- Row 1: Award | Classification | Level | Base rate | Calculated rate -->
-                    <div class="ca-classification-grid">
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Award</span>
-                            <span class="ca-detail-value">{selectedAwardCode} – {selectedAwardName}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Classification</span>
-                            <span class="ca-detail-value">{selectedClassification}</span>
-                        </div>
-                        <div class="ca-cl-item ca-cl-item_narrow">
-                            <span class="ca-detail-label">Level</span>
-                            <span class="ca-detail-value">{selectedClassificationLevel}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Base rate</span>
-                            <span class="ca-detail-value">{baseRateLabel}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Calculated rate</span>
-                            <lightning-input
-                                type="number"
-                                value={editableRate}
-                                min="0"
-                                step="0.0001"
-                                formatter="currency"
-                                onchange={handleRateChange}
-                                variant="label-hidden"
-                                class="ca-rate-input">
-                            </lightning-input>
-                            <span class="ca-rate-unit">/{calculatedRateTypeLabel} — editable</span>
-                        </div>
-                    </div>
-
-                    <!-- Row 2: Employment type | Base rate type | Calculated rate type | Clauses -->
-                    <div class="ca-classification-meta">
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Employment type</span>
-                            <span class="ca-detail-value">{selectedEmploymentType}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Base rate type</span>
-                            <span class="ca-detail-value">{apiBaseRateType}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Calculated rate type</span>
-                            <span class="ca-detail-value">{calculatedRateTypeLabel}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Clauses</span>
-                            <span class="ca-detail-value slds-text-color_weak">—</span>
-                        </div>
-                    </div>
-
-                </div>
-                </div>
-                </template>
-
-                <!-- Compact summary (visible when collapsed) -->
-                <template if:false={classificationExpanded}>
+                <!-- Compact summary (always visible) -->
                 <div class="ca-section-body">
                 <div class="ca-cl-compact">
                     <div class="ca-cl-compact-left">
                         <span class="ca-cl-compact-name">{selectedClassification}</span>
-                        <span class="ca-cl-compact-meta">
-                            Level {selectedClassificationLevel} &bull; {selectedAwardCode} – {selectedAwardName}
-                        </span>
-                        <span class="ca-cl-compact-meta">
-                            {selectedEmploymentType} &bull; Base: {baseRateLabel} &bull; {apiBaseRateType} &rarr; {calculatedRateTypeLabel}
-                        </span>
+                        <span class="ca-cl-compact-meta">Level {selectedClassificationLevel} &bull; {selectedAwardCode}</span>
                         <template if:true={isCasual}>
-                            <span class="ca-casual-badge_sm">CA loading applied</span>
+                            <span class="ca-casual-badge ca-casual-badge_sm">CA loading applied</span>
                         </template>
                     </div>
                     <div class="ca-cl-compact-right">
@@ -197,6 +122,54 @@
                     </div>
                 </div>
                 </div>
+
+                <!-- Expandable details -->
+                <template if:true={classificationExpanded}>
+                    <div class="ca-section-body ca-section-body_details">
+                    <div class="ca-classification-panel">
+
+                        <!-- Row 1: classification details -->
+                        <div class="ca-classification-grid">
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Award</span>
+                                <span class="ca-detail-value">{selectedAwardCode} – {selectedAwardName}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Classification</span>
+                                <span class="ca-detail-value">{selectedClassification}</span>
+                            </div>
+                            <div class="ca-cl-item ca-cl-item_narrow">
+                                <span class="ca-detail-label">Level</span>
+                                <span class="ca-detail-value">{selectedClassificationLevel}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Base rate</span>
+                                <span class="ca-detail-value">{baseRateLabel}</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: meta fields -->
+                        <div class="ca-classification-meta">
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Employment type</span>
+                                <span class="ca-detail-value">{selectedEmploymentType}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Base rate type</span>
+                                <span class="ca-detail-value">{apiBaseRateType}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Calculated rate type</span>
+                                <span class="ca-detail-value">{calculatedRateTypeLabel}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Clauses</span>
+                                <span class="ca-detail-value slds-text-color_weak">—</span>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
                 </template>
 
             </template>

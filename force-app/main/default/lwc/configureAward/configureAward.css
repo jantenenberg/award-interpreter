@@ -2,13 +2,13 @@
 
 .ca-section-header {
     background: #f3f2f2;
-    border-top: 1px solid #dddbda;
-    border-bottom: 1px solid #dddbda;
+    border-radius: 6px;
     color: #3e3e3c;
     font-size: 0.6875rem;
     font-weight: 700;
     letter-spacing: 0.07rem;
-    padding: 5px 0;
+    margin: 6px 0 2px;
+    padding: 6px 12px;
     text-transform: uppercase;
 }
 
@@ -21,7 +21,7 @@
 }
 
 .ca-section-header_toggle:hover {
-    background: #e8e8e8;
+    background: #e0e0e0;
 }
 
 .ca-toggle-icon {
@@ -168,10 +168,6 @@
     gap: 2px;
 }
 
-.ca-rate-input {
-    margin: 0;
-}
-
 .ca-rate-input-compact {
     width: 110px;
 }
@@ -181,24 +177,6 @@
     font-size: 0.6875rem;
     font-weight: 600;
     white-space: nowrap;
-}
-
-/* ── Casual badge ──────────────────────────────────────────────────────────── */
-
-.ca-casual-badge-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 6px;
-}
-
-.ca-casual-badge {
-    background: #fef3cd;
-    border: 1px solid #f0c040;
-    border-radius: 4px;
-    color: #7a5c00;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    padding: 3px 10px;
 }
 
 /* ── Expandable classification details panel ───────────────────────────────── */
@@ -214,7 +192,7 @@
 .ca-classification-grid {
     border-top: 1px solid #efefef;
     display: grid;
-    grid-template-columns: 2fr 1.5fr 0.4fr 1fr 1.2fr;
+    grid-template-columns: 2fr 1.5fr 0.4fr 1fr;
     column-gap: 18px;
     padding: 10px 0 8px;
     align-items: start;
