@@ -463,7 +463,7 @@
           const chipsEl = document.getElementById("summary-chips");
           const badgeEl = document.getElementById("db-badge");
 
-          if (loadingEl) loadingEl.hidden = true;
+          if (loadingEl) loadingEl.style.display = 'none';
 
           if (summary.database_connected) {
             badgeEl.innerHTML = `<span class="db-connected-badge">Connected to database</span>`;
@@ -487,7 +487,7 @@
           }
         } catch (e) {
           const loadingEl = document.getElementById("summary-loading");
-          if (loadingEl) loadingEl.hidden = true;
+          if (loadingEl) loadingEl.style.display = 'none';
           const errEl = document.getElementById("summary-error");
           errEl.textContent = `Could not connect to database: ${e.message}`;
           errEl.hidden = false;
