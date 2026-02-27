@@ -175,137 +175,29 @@
             <p>System documentation and architecture reference</p>
           </div>
         </div>
-        <nav class="app-nav">
-          <a href="./index.html">Calculator</a>
-          <a href="./config.html">Configuration</a>
-          <a href="./documentation.html" style="font-weight:700;text-decoration:underline;">Documentation</a>
-          <a href="./reference-data.html">Reference Data</a>
-        </nav>
+          <nav class="app-nav">
+            <a href="./index.html">Calculator</a>
+            <a href="./config.html">Configuration</a>
+            <a href="./documentation.html" class="active">Documentation</a>
+            <a href="./reference-data.html">Reference Data</a>
+          </nav>
       </div>
     </header>
 
     <main class="app-content">
     <div class="doc-body">
     <div class="container">
-    <h1>Award Interpreter - System Documentation</h1>
+    <h1>Calculation Engine – System Documentation</h1>
     <p style="font-size: 1.1em; color: #666; margin-bottom: 30px;">
-      This document explains how the Award Interpreter processes Fair Work Australia MAP CSV files,
-      relates the data, and calculates shift costs.
+      This document explains how the Award Interpreter calculation engine derives rates,
+      segments shifts, and calculates shift and roster costs. Reference data (awards, classifications,
+      penalties and allowances) is loaded from the database — see the
+      <a href="./reference-data.html" style="color:#0f766e;">Reference Data</a> tab to browse those tables.
     </p>
-
-    <!-- Input Files Section -->
-    <div class="section">
-      <h2>1. Input Files</h2>
-      <p>The system uses 5 CSV files exported from Fair Work Australia's MAP (Modern Awards Platform):</p>
-      
-      <div class="file-list">
-        <div class="file-item">
-          <strong>map-award-export-2025.csv</strong>
-          <p>Contains award definitions: award codes, names, and metadata.</p>
-          <p><em>Key fields:</em> <code>awardCode</code>, <code>awardFixedID</code>, <code>name</code></p>
-        </div>
-        
-        <div class="file-item">
-          <strong>map-classification-export-2025.csv</strong>
-          <p>Contains employee classifications with base rates and calculated rates (including casual loading).</p>
-          <p><em>Key fields:</em> <code>awardCode</code>, <code>employeeRateTypeCode</code> (CA/FT/PT), 
-          <code>classification</code>, <code>classificationLevel</code>, <code>baseRate</code>, <code>baseRateType</code> (Weekly/Hourly),
-          <code>calculatedRate</code>, <code>calculatedRateType</code>, <code>operativeFrom</code>, <code>operativeTo</code></p>
-        </div>
-        
-        <div class="file-item">
-          <strong>map-penalty-export-2025.csv</strong>
-          <p>Contains penalty rates for different day types and scenarios (Saturday, Sunday, overtime, etc.).</p>
-          <p><em>Key fields:</em> <code>awardCode</code>, <code>classification</code>, <code>classificationLevel</code>,
-          <code>employeeRateTypeCode</code>, <code>penaltyDescription</code> (e.g., "Saturday - ordinary hours"),
-          <code>rate</code> (percentage or dollar amount), <code>penaltyRateUnit</code> (Percentage/Hour),
-          <code>penaltyCalculatedValue</code> (pre-calculated hourly rate in dollars)</p>
-        </div>
-        
-        <div class="file-item">
-          <strong>map-wage-allowance-export-2025.csv</strong>
-          <p>Contains wage allowances (e.g., shift allowances, leading hand allowances).</p>
-          <p><em>Key fields:</em> <code>awardCode</code>, <code>allowance</code>, <code>paymentFrequency</code> (Hourly/Per shift/Weekly),
-          <code>rate</code>, <code>rateUnit</code>, <code>allowanceAmount</code></p>
-        </div>
-        
-        <div class="file-item">
-          <strong>map-expense-allowance-export-2025.csv</strong>
-          <p>Contains expense allowances (e.g., travel, meal allowances).</p>
-          <p><em>Key fields:</em> <code>awardCode</code>, <code>allowance</code>, <code>paymentFrequency</code> (Per km/Per shift),
-          <code>allowanceAmount</code></p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Data Loading Section -->
-    <div class="section">
-      <h2>2. Data Loading & Indexing</h2>
-      
-      <h3>2.1 CSV Parsing</h3>
-      <p>CSV files are parsed with support for:</p>
-      <ul>
-        <li>Quoted fields containing commas</li>
-        <li>Newlines within quoted fields</li>
-        <li>Escaped quotes (<code>""</code> within quotes)</li>
-      </ul>
-      
-      <h3>2.2 Operative Date Filtering</h3>
-      <p>Only rows where today's date falls within the <code>operativeFrom</code> and <code>operativeTo</code> range are kept:</p>
-      <pre><code>operativeFrom ≤ today ≤ operativeTo</code></pre>
-      
-      <h3>2.3 Data Indexes</h3>
-      <p>Data is organized into multiple indexes for fast lookup:</p>
-      
-      <table>
-        <tr>
-          <th>Index</th>
-          <th>Key</th>
-          <th>Value</th>
-          <th>Purpose</th>
-        </tr>
-        <tr>
-          <td><code>awardsByCode</code></td>
-          <td>Award code</td>
-          <td>Award object</td>
-          <td>Lookup award details</td>
-        </tr>
-        <tr>
-          <td><code>classificationsByAward</code></td>
-          <td>Award code</td>
-          <td>Array of classifications</td>
-          <td>All classifications for an award</td>
-        </tr>
-        <tr>
-          <td><code>classificationsByAwardAndRateType</code></td>
-          <td><code>"awardCode|rateType"</code></td>
-          <td>Array of classifications</td>
-          <td>Classifications filtered by employment type (CA/FT/PT)</td>
-        </tr>
-        <tr>
-          <td><code>penaltiesByAward</code></td>
-          <td>Award code</td>
-          <td>Array of penalty rows</td>
-          <td>All penalties for an award</td>
-        </tr>
-        <tr>
-          <td><code>penaltiesByClassification</code></td>
-          <td><code>"awardCode|classification|level"</code></td>
-          <td>Array of penalty rows</td>
-          <td>Penalties for a specific classification</td>
-        </tr>
-        <tr>
-          <td><code>allowancesByAward</code></td>
-          <td>Award code</td>
-          <td><code>{ wage: [...], expense: [...] }</code></td>
-          <td>Wage and expense allowances for an award</td>
-        </tr>
-      </table>
-    </div>
 
     <!-- Data Relationships Section -->
     <div class="section">
-      <h2>3. Data Relationships</h2>
+      <h2>1. Data Relationships</h2>
       
       <div class="diagram">
 Award (MA000004)
@@ -315,17 +207,17 @@ Award (MA000004)
   │   └── Retail Employee Level 2 (CA) → ...
   │
   ├── Penalties (matched by award + classification + rate type) — rates after validation (MA000004 CA Level 1)
-  │   ├── "Saturday - ordinary hours" → $33.19/hour  [CSV overridden: flat ×1.25 on $26.55]
-  │   ├── "Sunday - ordinary hours"   → $39.83/hour  [CSV overridden: ×1.50 on $26.55]
+  │   ├── "Saturday - ordinary hours" → $33.19/hour  [flat ×1.25 on $26.55]
+  │   ├── "Sunday - ordinary hours"   → $39.83/hour  [×1.50 on $26.55]
   │   └── "Public holiday"            → $59.74/hour  [×2.25 on $26.55]
   │
   └── Allowances
       ├── Wage: "Shift allowance - afternoon", "Leading hand allowance", ...
       └── Expense: "Meal allowance", "Travel allowance - per km", ...
       </div>
-      <p><strong>Note:</strong> Raw CSV <code>penaltyCalculatedValue</code> figures may differ from the above. The multiplier validation layer (Section 4.3.1) detects and overrides out-of-range values. For MA000004 CA Level 1, tiered Saturday rows in the CSV are discarded — see Section 4.4.</p>
+      <p><strong>Note:</strong> Raw <code>penaltyCalculatedValue</code> figures from the database may differ from the above. The multiplier validation layer (Section 2.3.1) detects and overrides out-of-range values. For MA000004 CA Level 1, tiered Saturday rows are discarded — see Section 2.4.</p>
       
-      <h3>3.1 Classification Selection</h3>
+      <h3>1.1 Classification Selection</h3>
       <p>When a user selects:</p>
       <ul>
         <li><strong>Award:</strong> Filters to that award's data</li>
@@ -333,7 +225,7 @@ Award (MA000004)
         <li><strong>Classification:</strong> Selects the specific classification row</li>
       </ul>
       
-      <h3>3.2 Penalty Matching</h3>
+      <h3>1.2 Penalty Matching</h3>
       <p><strong>STEP 4 Fix:</strong> A penalty row applies if:</p>
       <ol>
         <li><code>penalty.awardCode === selectedAwardCode</code></li>
@@ -358,7 +250,7 @@ Award (MA000004)
         </ul>
       </div>
 
-      <h3>3.3 Engine inputs</h3>
+      <h3>1.3 Engine inputs</h3>
       <p>The shift/roster cost engine uses the following inputs. All of these affect the final cost.</p>
       
       <table>
@@ -373,15 +265,15 @@ Award (MA000004)
         <tr><td>Per shift: Break (min)</td><td>Unpaid break minutes; deducted from paid hours</td></tr>
         <tr><td>Per shift: Kms</td><td>Kilometres (for per-km expense allowances)</td></tr>
         <tr><td>Wage / expense allowances</td><td>Selected allowance types from the award</td></tr>
-        <tr><td rowspan="3"><strong>Data (CSV + selection)</strong></td><td>Classification row</td><td><code>baseRate</code>, <code>baseRateType</code>, <code>calculatedRate</code>, <code>calculatedRateType</code>, <code>employeeRateTypeCode</code>, etc.</td></tr>
-        <tr><td>Penalty rows</td><td>All penalties matching award + classification + level + rate type (see 3.2)</td></tr>
+        <tr><td rowspan="3"><strong>Data (database + selection)</strong></td><td>Classification row</td><td><code>baseRate</code>, <code>baseRateType</code>, <code>calculatedRate</code>, <code>calculatedRateType</code>, <code>employeeRateTypeCode</code>, etc.</td></tr>
+        <tr><td>Penalty rows</td><td>All penalties matching award + classification + level + rate type (see 1.2)</td></tr>
         <tr><td>Public holidays</td><td>Optional list of YYYY-MM-DD dates (e.g. from state/territory)</td></tr>
       </table>
 
-      <h3>3.4 Calculation flow overview</h3>
+      <h3>1.4 Calculation flow overview</h3>
       <p>High-level order of operations for a single shift:</p>
       <ol>
-        <li><strong>Resolve ordinary hourly rate</strong> — From classification and (when applicable) Casual loading % (see Section 4.1).</li>
+        <li><strong>Resolve ordinary hourly rate</strong> — From classification and (when applicable) Casual loading % (see Section 2.1).</li>
         <li><strong>Build penalty rate map</strong> — Map penalty keys (ordinary, saturday, sunday, etc.) to dollar rates; apply multiplier validation and MA000004 Saturday fix; when using casual loading for rate, set Sunday to ordinary × 1.50.</li>
         <li><strong>Segment the shift</strong> — Split shift into 6-minute segments by day type (public holiday, Sunday, Saturday, weekday) and time-of-day (before 7am, 7am–6pm, after 6pm; Friday late). Apply overtime after 9 ordinary hours.</li>
         <li><strong>Apply casual minimum engagement</strong> — If casual and paid hours &lt; 3, pad to 3 hours at the shift’s day-type rate.</li>
@@ -393,9 +285,9 @@ Award (MA000004)
 
     <!-- Rate Calculation Section -->
     <div class="section">
-      <h2>4. Rate Calculation Logic</h2>
+      <h2>2. Rate Calculation Logic</h2>
       
-      <h3>4.0 Casual loading and “use loading for rate”</h3>
+      <h3>2.0 Casual loading and “use loading for rate”</h3>
       <p>The UI exposes a <strong>Casual loading %</strong> field (0–100, default 25, persisted). The engine uses it only when <strong>both</strong> of the following are true:</p>
       <ul>
         <li>The user has selected <strong>Employment type: Casual (CA)</strong> (from the dropdown).</li>
@@ -406,17 +298,17 @@ Award (MA000004)
 ordinaryHourly = (baseRate ÷ 38) × loadingMultiplier    // when "use loading for rate"</code></pre>
       <p>The <strong>“Calculated rate”</strong> shown in the Base and penalty rates panel uses this same formula when Casual is selected and the classification has a weekly base, so the displayed rate matches the rate used in the roster cost breakdown.</p>
       
-      <h3>4.1 Ordinary hourly rate derivation</h3>
+      <h3>2.1 Ordinary hourly rate derivation</h3>
       <p>The system derives the ordinary hourly rate used for the shift in this order:</p>
       
       <div class="flow-diagram">
         <div class="flow-step">
           <strong>Step 1 (use casual loading for rate):</strong> If the UI has set “use loading for rate” (user selected Casual and classification has weekly base), then:<br>
           <code>ordinaryHourly = (baseRate ÷ 38) × (1 + casualLoadingPercent/100)</code><br>
-          <em>This overrides the CSV calculated rate so the user’s Casual loading % is always applied when applicable. 0% gives base/38.</em>
+          <em>This overrides the database calculated rate so the user’s Casual loading % is always applied when applicable. 0% gives base/38.</em>
         </div>
         <div class="flow-step">
-          <strong>Step 2 (CSV hourly rate):</strong> If <code>calculatedRateType</code> is "Hourly" and <code>calculatedRate</code> exists, use <code>calculatedRate</code>.
+          <strong>Step 2 (database hourly rate):</strong> If <code>calculatedRateType</code> is "Hourly" and <code>calculatedRate</code> exists, use <code>calculatedRate</code>.
         </div>
         <div class="flow-step">
           <strong>Step 3 (weekly fallback):</strong> If <code>baseRateType</code> is "Weekly" and <code>baseRate</code> exists:<br>
@@ -445,7 +337,7 @@ ordinaryHourly = (baseRate ÷ 38) × loadingMultiplier    // when "use loading f
         </ul>
       </div>
       
-      <h3>4.2 Penalty Rate Mapping</h3>
+      <h3>2.2 Penalty Rate Mapping</h3>
       <p>Penalty descriptions are normalized to internal keys:</p>
       
       <table>
@@ -486,7 +378,7 @@ ordinaryHourly = (baseRate ÷ 38) × loadingMultiplier    // when "use loading f
         </tr>
       </table>
       
-      <h3>4.3 Penalty Rate Value</h3>
+      <h3>2.3 Penalty Rate Value</h3>
       <p>For each penalty, the system prefers:</p>
       <ol>
         <li><code>penaltyCalculatedValue</code> (pre-calculated hourly rate in dollars)</li>
@@ -494,8 +386,8 @@ ordinaryHourly = (baseRate ÷ 38) × loadingMultiplier    // when "use loading f
         <li>If dollar amount: use <code>rate</code> directly</li>
       </ol>
       
-      <h3>4.3.1 Multiplier Validation Layer (Data Quality Protection)</h3>
-      <p><strong>STEP 2 Implementation:</strong> For MA000004 Casual Level 1 employees, the system includes a multiplier validation layer that protects against incorrect CSV data:</p>
+      <h3>2.3.1 Multiplier Validation Layer (Data Quality Protection)</h3>
+      <p><strong>STEP 2 Implementation:</strong> For MA000004 Casual Level 1 employees, the system includes a multiplier validation layer that protects against incorrect database data:</p>
       <ul>
         <li><strong>Expected Multiplier Ranges:</strong> Each penalty key has an expected multiplier range:
           <table>
@@ -517,21 +409,21 @@ ordinaryHourly = (baseRate ÷ 38) × loadingMultiplier    // when "use loading f
           </ol>
         </li>
         <li><strong>Warning Messages:</strong> When an override is applied, a warning is added to the API response:
-          <pre><code>"Rate override applied for [key]: CSV value $X.XX implies ×Y.YY which is outside expected range (min-max). Using calculated rate $Z.ZZ instead. Source row: [description] ([rateType], Level [level])"</code></pre>
+          <pre><code>"Rate override applied for [key]: database value $X.XX implies ×Y.YY which is outside expected range (min-max). Using calculated rate $Z.ZZ instead. Source row: [description] ([rateType], Level [level])"</code></pre>
         </li>
-        <li><strong>Rationale:</strong> This validation layer ensures that incorrect <code>penaltyCalculatedValue</code> figures from the MAP CSV (or penalties matched from wrong classifications) do not produce incorrect shift costs. The system automatically corrects data quality issues while alerting users to the problem.</li>
+        <li><strong>Rationale:</strong> This validation layer ensures that incorrect <code>penaltyCalculatedValue</code> figures from the database (or penalties matched from wrong classifications) do not produce incorrect shift costs. The system automatically corrects data quality issues while alerting users to the problem.</li>
       </ul>
       
-      <h3>4.4 Saturday Penalty Verification (BUG 4 Fix)</h3>
-      <p>The system checks whether tiered Saturday rates exist in the MAP CSV data and whether they are legitimate for the selected award/classification/rate type:</p>
+      <h3>2.4 Saturday Penalty Verification (BUG 4 Fix)</h3>
+      <p>The system checks whether tiered Saturday rates exist in the database and whether they are legitimate for the selected award/classification/rate type:</p>
       <ul>
-        <li><strong>MA000004 CA Level 1 (known exception):</strong> Tiered Saturday rows (<code>saturday_first_X</code>, <code>saturday_after_X</code>) are always discarded for this classification regardless of what the CSV contains. This is a confirmed data quality issue — the tiered rows in the CSV do not represent the correct award entitlement for this classification. The flat Saturday rate (×1.25 on ordinary hourly rate) is always used for all Saturday hours.</li>
-        <li><strong>Other awards/classifications:</strong> If tiered rates exist and their implied multipliers pass the validation check in Section 4.3.1, tiered logic is applied. If only a flat rate exists (<code>saturday_ordinary</code> or generic <code>saturday</code>), the flat rate is used for all Saturday hours.</li>
+        <li><strong>MA000004 CA Level 1 (known exception):</strong> Tiered Saturday rows (<code>saturday_first_X</code>, <code>saturday_after_X</code>) are always discarded for this classification regardless of what the database contains. This is a confirmed data quality issue — the tiered rows in the database do not represent the correct award entitlement for this classification. The flat Saturday rate (×1.25 on ordinary hourly rate) is always used for all Saturday hours.</li>
+        <li><strong>Other awards/classifications:</strong> If tiered rates exist and their implied multipliers pass the validation check in Section 2.3.1, tiered logic is applied. If only a flat rate exists (<code>saturday_ordinary</code> or generic <code>saturday</code>), the flat rate is used for all Saturday hours.</li>
         <li><strong>Consistency check:</strong> If the Saturday ordinary rate exceeds the Sunday rate after validation, a warning is generated.</li>
       </ul>
       
-      <h3>4.5 Sunday rate and validation (BUG 5 Fix)</h3>
-      <p>When the engine is <strong>using casual loading for the ordinary rate</strong> (user selected Casual and classification has weekly base), the CSV Sunday rate is often based on the unloaded rate (e.g. 26.55 × 1.50 = 39.83). The engine therefore <strong>overrides</strong> the Sunday penalty rate to:</p>
+      <h3>2.5 Sunday rate and validation (BUG 5 Fix)</h3>
+      <p>When the engine is <strong>using casual loading for the ordinary rate</strong> (user selected Casual and classification has weekly base), the database Sunday rate is often based on the unloaded rate (e.g. 26.55 × 1.50 = 39.83). The engine therefore <strong>overrides</strong> the Sunday penalty rate to:</p>
       <pre><code>sundayRate = ordinaryHourly × 1.50</code></pre>
       <p>so that Sunday costs and validation stay consistent with the loaded ordinary rate. When not using casual loading for rate, the Sunday rate from the penalty map is used as-is.</p>
       <p>The system also validates that the Sunday rate equals ordinary × 1.50. If the value in the map (after any override) differs beyond tolerance, a validation warning is generated:</p>
@@ -545,13 +437,13 @@ ordinaryHourly = (baseRate ÷ 38) × loadingMultiplier    // when "use loading f
 
     <!-- Shift Cost Calculation Section -->
     <div class="section">
-      <h2>5. Shift Cost Calculation</h2>
+      <h2>3. Shift Cost Calculation</h2>
       <p>For each shift, the engine computes <strong>paid hours</strong> (duration minus unpaid break), splits that time into segments by day type and time-of-day, looks up the rate for each segment from the penalty map, then sums costs and adds allowances:</p>
       <pre><code>segmentCost = segmentHours × ratePerHour   (rate from penalty map for that segment's key)
 shiftCost = Σ segmentCosts + Σ wageAllowanceCosts + Σ expenseAllowanceCosts</code></pre>
       <p>Standard full-time week is 38 hours (Fair Work); weekly base rates are divided by 38 to get an hourly equivalent.</p>
       
-      <h3>5.0 Weekday Time-of-Day Penalties (BUG 1 Fix)</h3>
+      <h3>3.0 Weekday Time-of-Day Penalties (BUG 1 Fix)</h3>
       <p>The system now splits weekday shifts by time boundaries and applies appropriate penalty rates:</p>
       <table>
         <tr>
@@ -595,7 +487,7 @@ shiftCost = Σ segmentCosts + Σ wageAllowanceCosts + Σ expenseAllowanceCosts</
         </ul>
       </div>
       
-      <h3>5.1 Weekday Overtime Logic (BUG 2 Fix)</h3>
+      <h3>3.1 Weekday Overtime Logic (BUG 2 Fix)</h3>
       <p>After 9 ordinary hours per day, overtime multipliers apply:</p>
       <ul>
         <li><strong>First 3 hours of overtime:</strong> ×1.50 multiplier</li>
@@ -614,7 +506,7 @@ shiftCost = Σ segmentCosts + Σ wageAllowanceCosts + Σ expenseAllowanceCosts</
         <p><em>Note: Rate calculation = $26.55 × 1.10 (late) × 1.50 (overtime) = $43.81/hr</em></p>
       </div>
       
-      <h3>5.2 Casual Minimum Engagement (BUG 3 Fix)</h3>
+      <h3>3.2 Casual Minimum Engagement (BUG 3 Fix)</h3>
       <p><strong>MA000004 Clause 13.3:</strong> Casual employees must be paid a minimum of 3 hours per engagement, regardless of actual hours worked.</p>
       <ul>
         <li>If paid hours &lt; 3, the system pads to 3 hours</li>
@@ -651,7 +543,7 @@ shiftCost = Σ segmentCosts + Σ wageAllowanceCosts + Σ expenseAllowanceCosts</
         </ul>
       </div>
       
-      <h3>5.3 Shift Segmentation</h3>
+      <h3>3.3 Shift Segmentation</h3>
       <p>The system processes a shift in 6-minute increments, determining the penalty key for each moment:</p>
       
       <div class="flow-diagram">
@@ -660,7 +552,7 @@ shiftCost = Σ segmentCosts + Σ wageAllowanceCosts + Σ expenseAllowanceCosts</
           <br>1. Check if it's a public holiday → <code>publicholiday</code>
           <br>2. Check if it's Sunday → <code>sunday</code>
           <br>3. Check if it's Saturday → apply Saturday logic
-          <br>4. Otherwise → apply weekday time-of-day logic (see Section 5.0):
+          <br>4. Otherwise → apply weekday time-of-day logic (see Section 3.0):
           <br>&nbsp;&nbsp;&nbsp;&nbsp;• Before 7am = <code>weekday_early_late</code> (×1.10)
           <br>&nbsp;&nbsp;&nbsp;&nbsp;• 7am–6pm = <code>ordinary</code> (×1.00)
           <br>&nbsp;&nbsp;&nbsp;&nbsp;• After 6pm Mon–Thu = <code>weekday_early_late</code> (×1.10)
@@ -685,15 +577,15 @@ shiftCost = Σ segmentCosts + Σ wageAllowanceCosts + Σ expenseAllowanceCosts</
           <li>All hours: 4.5 hrs at flat Saturday rate (×1.25)</li>
           <li>4.5 hrs × $33.19 = $149.36</li>
         </ul>
-        <p><em>Note: For MA000004 CA Level 1, tiered Saturday rates are not used; see Section 4.4.</em></p>
+        <p><em>Note: For MA000004 CA Level 1, tiered Saturday rates are not used; see Section 2.4.</em></p>
       </div>
       
-      <h3>5.2 Segment Accumulation</h3>
+      <h3>3.4 Segment Accumulation</h3>
       <p>Segments with the same penalty key are accumulated:</p>
       <pre><code>Saturday - all hours: 4.5 hrs × $33.19 = $149.36
 Total shift cost: $149.36</code></pre>
       
-      <h3>5.3 Break Deduction</h3>
+      <h3>3.5 Break Deduction</h3>
       <p>Unpaid breaks are excluded from paid hours:</p>
       <ul>
         <li>Break time is skipped during segmentation</li>
@@ -710,10 +602,10 @@ Total shift cost: $149.36</code></pre>
 
     <!-- Allowance Calculation Section -->
     <div class="section">
-      <h2>6. Allowance Calculations</h2>
+      <h2>4. Allowance Calculations</h2>
       <p>Allowances use the same <strong>effective ordinary hourly rate</strong> as the shift when they are percentage-based: that rate is passed from the shift cost engine (and includes casual loading when “use loading for rate” applies). So wage allowances stay consistent with the rate shown in the roster breakdown.</p>
       
-      <h3>6.1 Wage Allowances</h3>
+      <h3>4.1 Wage Allowances</h3>
       <p>Wage allowances are calculated based on <code>paymentFrequency</code> and <code>rateUnit</code>:</p>
       
       <table>
@@ -749,7 +641,7 @@ Total shift cost: $149.36</code></pre>
         </tr>
       </table>
       
-      <h3>6.2 Expense Allowances</h3>
+      <h3>4.2 Expense Allowances</h3>
       <p>Expense allowances are calculated based on <code>paymentFrequency</code>:</p>
       
       <table>
@@ -778,7 +670,7 @@ Total shift cost: $149.36</code></pre>
 
     <!-- Roster Calculation Section -->
     <div class="section">
-      <h2>7. Roster Cost Calculation</h2>
+      <h2>5. Roster Cost Calculation</h2>
       <p>For multiple shifts:</p>
       <ol>
         <li>Each shift is calculated independently using the logic above</li>
@@ -797,23 +689,23 @@ Total shift cost: $149.36</code></pre>
 
     <!-- Key Design Decisions Section -->
     <div class="section">
-      <h2>8. Key Design Decisions</h2>
+      <h2>6. Key Design Decisions</h2>
       
-      <h3>8.1 Saturday "First X Hours" Logic</h3>
+      <h3>6.1 Saturday "First X Hours" Logic</h3>
       <div class="info">
         <strong>Decision:</strong> "First X hours" refers to the first X hours <strong>worked in the shift</strong>, not hours since midnight.
         <br><br>
         <strong>Rationale:</strong> Awards typically specify "first X hours of work" on Saturday, meaning the first X hours of the employee's shift, not the first X hours of the calendar day.
       </div>
       
-      <h3>8.2 Penalty Rate Precedence</h3>
+      <h3>6.2 Penalty Rate Precedence</h3>
       <div class="info">
         <strong>Decision:</strong> Penalty rows can override the classification's ordinary rate if they map to the "ordinary" key.
         <br><br>
         <strong>Rationale:</strong> Some penalty rows (e.g., "Monday - ordinary hours") may specify rates that already include casual loading or other adjustments, so they should take precedence over the base classification rate.
       </div>
       
-      <h3>8.3 Saturday Ordinary Hours</h3>
+      <h3>6.3 Saturday Ordinary Hours</h3>
       <div class="info">
         <strong>Decision:</strong> "Saturday - ordinary hours" maps to <code>saturday_ordinary</code>, not generic <code>ordinary</code>.
         <br><br>
@@ -823,14 +715,14 @@ Total shift cost: $149.36</code></pre>
 
     <!-- Summary Section -->
     <div class="section">
-      <h2>9. Summary</h2>
+      <h2>7. Summary</h2>
       <p>The Award Interpreter system:</p>
       <ol>
-        <li><strong>Loads</strong> 5 CSV files and indexes them by award, classification, and rate type</li>
-        <li><strong>Accepts</strong> user inputs: award, employment type, classification, Casual loading % (0–100), and per-shift date, start time, duration, break, kms, and selected allowances (see Section 3.3)</li>
-        <li><strong>Matches</strong> penalties and allowances to the selected award/classification/level/rate type (Section 3.2)</li>
-        <li><strong>Derives</strong> the ordinary hourly rate: when user selected Casual and classification has weekly base, uses (base÷38)×(1 + casualLoadingPercent/100); otherwise uses CSV calculated rate or weekly fallback (Section 4.1)</li>
-        <li><strong>Builds</strong> the penalty rate map from matched penalties, with multiplier validation, MA000004 Saturday flat-rate fix, and when using casual loading for rate, Sunday = ordinary × 1.50 (Sections 4.2–4.5)</li>
+        <li><strong>Loads</strong> reference data from the database (awards, classifications, penalties, allowances)</li>
+        <li><strong>Accepts</strong> user inputs: award, employment type, classification, Casual loading % (0–100), and per-shift date, start time, duration, break, kms, and selected allowances (see Section 1.3)</li>
+        <li><strong>Matches</strong> penalties and allowances to the selected award/classification/level/rate type (Section 1.2)</li>
+        <li><strong>Derives</strong> the ordinary hourly rate: when user selected Casual and classification has weekly base, uses (base÷38)×(1 + casualLoadingPercent/100); otherwise uses database calculated rate or weekly fallback (Section 2.1)</li>
+        <li><strong>Builds</strong> the penalty rate map from matched penalties, with multiplier validation, MA000004 Saturday flat-rate fix, and when using casual loading for rate, Sunday = ordinary × 1.50 (Sections 2.2–4.5)</li>
         <li><strong>Maps</strong> penalty descriptions to internal keys (ordinary, saturday_ordinary, sunday, etc.) for lookup</li>
         <li><strong>Segments</strong> shifts by day type, time-of-day boundaries, and hours worked (6-minute precision)</li>
         <li><strong>Applies</strong> weekday time-of-day penalties (before 7am, 7am–6pm, after 6pm; Friday late ×1.15)</li>
@@ -846,7 +738,7 @@ Total shift cost: $149.36</code></pre>
     
     <!-- Bug Fixes Section -->
     <div class="section">
-      <h2>10. Recent Bug Fixes (February 2026)</h2>
+      <h2>8. Recent Bug Fixes (February 2026)</h2>
       <p>The following bugs were identified and fixed in a code review:</p>
       <ul>
         <li><strong>BUG 1:</strong> Weekday time-of-day penalties now correctly applied (before 7am, 7am-6pm, after 6pm)</li>

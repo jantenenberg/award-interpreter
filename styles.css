@@ -93,6 +93,11 @@ body {
   text-decoration: underline;
 }
 
+.app-nav a.active {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .app-header h1 {
   font-size: 26px;
   margin-bottom: 6px;
