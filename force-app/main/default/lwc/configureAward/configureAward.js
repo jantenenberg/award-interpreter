@@ -48,6 +48,7 @@ export default class ConfigureAward extends LightningElement {
     @track selectedClassification = '';
     @track selectedClassificationLevel = null;
     @track selectedClassificationValue = '';
+    @track classificationExpanded = false;
 
     // Rate data from API (readonly reference values)
     @track apiBaseRate = null;          // weekly base rate, e.g. 1008.90
@@ -61,7 +62,13 @@ export default class ConfigureAward extends LightningElement {
     @track editableRate = null;         // user-editable; defaults to rate-with-loading
 
     get employmentTypeOptions() {
-        return EMPLOYMENT_TYPE_OPTIONS;
+        return EMPLOYMENT_TYPE_OPTIONS.map(opt => ({
+            ...opt,
+            buttonClass: [
+                'ca-type-btn',
+                this.selectedEmploymentType === opt.value ? 'ca-type-btn_active' : '',
+            ].filter(Boolean).join(' '),
+        }));
     }
 
     get isCasual() {
@@ -88,6 +95,10 @@ export default class ConfigureAward extends LightningElement {
     // Calculated rate type label, e.g. "Hourly"
     get calculatedRateTypeLabel() {
         return this.apiCalculatedRateType || 'Hourly';
+    }
+
+    get classificationToggleIcon() {
+        return this.classificationExpanded ? 'utility:chevronup' : 'utility:chevrondown';
     }
 
     get isSaveDisabled() {
@@ -250,10 +261,16 @@ export default class ConfigureAward extends LightningElement {
         this.loadClassifications(true);
     }
 
-    handleEmploymentTypeChange(event) {
-        this.selectedEmploymentType = event.detail.value;
-        this.casualLoadingPercent = this.selectedEmploymentType === 'CA' ? 25 : 0;
+    handleEmploymentTypeButtonClick(event) {
+        const value = event.currentTarget.dataset.value;
+        if (value === this.selectedEmploymentType) return;
+        this.selectedEmploymentType = value;
+        this.casualLoadingPercent = value === 'CA' ? 25 : 0;
         this.loadClassifications(true);
+    }
+
+    handleToggleClassification() {
+        this.classificationExpanded = !this.classificationExpanded;
     }
 
     handleClassificationChange(event) {

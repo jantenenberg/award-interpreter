@@ -8,39 +8,31 @@
         </template>
 
         <template if:true={errorMessage}>
-            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_medium" role="alert">
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
                 <span>{errorMessage}</span>
             </div>
         </template>
 
         <template if:false={isLoading}>
 
-            <!-- ─── RESOURCE ──────────────────────────────────────────────────── -->
-            <div class="ca-section-header">RESOURCE</div>
-            <div class="ca-section-body">
+            <!-- ─── RESOURCE BANNER (no section header) ───────────────────────── -->
+            <div class="ca-resource-banner">
                 <template if:true={resourceName}>
-                    <p class="ca-resource-label">
-                        Configuring award for <strong>{resourceName}</strong>
-                    </p>
+                    <lightning-icon icon-name="standard:contact" size="x-small" class="ca-resource-icon"></lightning-icon>
+                    <span>Configuring award for <strong>{resourceName}</strong></span>
                 </template>
                 <template if:false={resourceName}>
-                    <p class="ca-resource-label slds-text-color_weak">
-                        No resource linked to this record.
-                    </p>
+                    <lightning-icon icon-name="utility:warning" size="x-small" class="ca-resource-icon ca-resource-icon_warn"></lightning-icon>
+                    <span class="slds-text-color_weak">No resource linked to this record.</span>
                 </template>
             </div>
 
             <!-- ─── AWARD SELECTION ───────────────────────────────────────────── -->
             <div class="ca-section-header">AWARD SELECTION</div>
             <div class="ca-section-body">
-                <p class="ca-help-text">
-                    Select the award, employment type, and classification applicable
-                    to this resource. Classifications are loaded from the Fair Work
-                    Award Interpreter based on the selected award and employment type.
-                </p>
 
                 <div class="slds-form slds-form_stacked">
-                    <div class="slds-form-element slds-m-bottom_small">
+                    <div class="slds-form-element slds-m-bottom_x-small">
                         <lightning-combobox
                             label="Award"
                             placeholder="Select an award..."
@@ -51,19 +43,27 @@
                         </lightning-combobox>
                     </div>
 
-                    <div class="slds-form-element slds-m-bottom_small">
-                        <lightning-combobox
-                            label="Employment Type"
-                            placeholder="Select employment type..."
-                            options={employmentTypeOptions}
-                            value={selectedEmploymentType}
-                            onchange={handleEmploymentTypeChange}
-                            required>
-                        </lightning-combobox>
+                    <!-- Employment Type — inline button group -->
+                    <div class="slds-form-element slds-m-bottom_x-small">
+                        <label class="slds-form-element__label">
+                            <abbr class="slds-required" title="required">*</abbr> Employment Type
+                        </label>
+                        <div class="ca-type-group">
+                            <template for:each={employmentTypeOptions} for:item="opt">
+                                <button
+                                    key={opt.value}
+                                    class={opt.buttonClass}
+                                    data-value={opt.value}
+                                    onclick={handleEmploymentTypeButtonClick}
+                                    type="button">
+                                    {opt.label}
+                                </button>
+                            </template>
+                        </div>
                     </div>
 
                     <template if:true={showClassifications}>
-                        <div class="slds-form-element slds-m-bottom_x-small">
+                        <div class="slds-form-element">
                             <lightning-combobox
                                 label="Classification"
                                 placeholder="Select classification..."
@@ -84,90 +84,102 @@
                 </div>
             </div>
 
-            <!-- ─── SELECTED CLASSIFICATION SUMMARY ──────────────────────────── -->
+            <!-- ─── SELECTED CLASSIFICATION — collapsible ─────────────────────── -->
             <template if:true={showClassificationSummary}>
-                <div class="ca-section-header">SELECTED CLASSIFICATION</div>
+
+                <!-- Clickable header with toggle -->
+                <div class="ca-section-header ca-section-header_toggle" onclick={handleToggleClassification}>
+                    <span>SELECTED CLASSIFICATION</span>
+                    <lightning-icon
+                        icon-name={classificationToggleIcon}
+                        size="xx-small"
+                        class="ca-toggle-icon">
+                    </lightning-icon>
+                </div>
+
+                <!-- Compact summary (always visible) -->
                 <div class="ca-section-body">
-                <div class="ca-classification-panel">
-
-                    <template if:true={isCasual}>
-                        <div class="ca-casual-badge-row">
-                            <span class="ca-casual-badge">
-                                Casual (includes casual loading in calculated rate)
-                            </span>
-                        </div>
-                    </template>
-
-                    <!-- Row 1: classification details -->
-                    <div class="ca-classification-grid">
-                        <div class="ca-cl-item ca-cl-item_wide">
-                            <span class="ca-detail-label">Award</span>
-                            <span class="ca-detail-value">{selectedAwardCode} – {selectedAwardName}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Classification</span>
-                            <span class="ca-detail-value">{selectedClassification}</span>
-                        </div>
-                        <div class="ca-cl-item ca-cl-item_narrow">
-                            <span class="ca-detail-label">Level</span>
-                            <span class="ca-detail-value">{selectedClassificationLevel}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Base rate</span>
-                            <span class="ca-detail-value">{baseRateLabel}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Calculated rate</span>
-                            <lightning-input
-                                type="number"
-                                value={editableRate}
-                                min="0"
-                                step="0.0001"
-                                formatter="currency"
-                                onchange={handleRateChange}
-                                variant="label-hidden"
-                                class="ca-rate-input">
-                            </lightning-input>
-                            <span class="ca-rate-unit">/{calculatedRateTypeLabel} — editable</span>
-                        </div>
+                <div class="ca-cl-compact">
+                    <div class="ca-cl-compact-left">
+                        <span class="ca-cl-compact-name">{selectedClassification}</span>
+                        <span class="ca-cl-compact-meta">Level {selectedClassificationLevel} &bull; {selectedAwardCode}</span>
+                        <template if:true={isCasual}>
+                            <span class="ca-casual-badge ca-casual-badge_sm">CA loading applied</span>
+                        </template>
                     </div>
-
-                    <!-- Row 2: meta fields -->
-                    <div class="ca-classification-meta">
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Employment type</span>
-                            <span class="ca-detail-value">{selectedEmploymentType}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Base rate type</span>
-                            <span class="ca-detail-value">{apiBaseRateType}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Calculated rate type</span>
-                            <span class="ca-detail-value">{calculatedRateTypeLabel}</span>
-                        </div>
-                        <div class="ca-cl-item">
-                            <span class="ca-detail-label">Clauses</span>
-                            <span class="ca-detail-value slds-text-color_weak">—</span>
-                        </div>
+                    <div class="ca-cl-compact-right">
+                        <lightning-input
+                            type="number"
+                            value={editableRate}
+                            min="0"
+                            step="0.0001"
+                            formatter="currency"
+                            onchange={handleRateChange}
+                            variant="label-hidden"
+                            class="ca-rate-input-compact">
+                        </lightning-input>
+                        <span class="ca-rate-unit">/{calculatedRateTypeLabel} — editable</span>
                     </div>
-
                 </div>
                 </div>
+
+                <!-- Expandable details -->
+                <template if:true={classificationExpanded}>
+                    <div class="ca-section-body ca-section-body_details">
+                    <div class="ca-classification-panel">
+
+                        <!-- Row 1: classification details -->
+                        <div class="ca-classification-grid">
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Award</span>
+                                <span class="ca-detail-value">{selectedAwardCode} – {selectedAwardName}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Classification</span>
+                                <span class="ca-detail-value">{selectedClassification}</span>
+                            </div>
+                            <div class="ca-cl-item ca-cl-item_narrow">
+                                <span class="ca-detail-label">Level</span>
+                                <span class="ca-detail-value">{selectedClassificationLevel}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Base rate</span>
+                                <span class="ca-detail-value">{baseRateLabel}</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: meta fields -->
+                        <div class="ca-classification-meta">
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Employment type</span>
+                                <span class="ca-detail-value">{selectedEmploymentType}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Base rate type</span>
+                                <span class="ca-detail-value">{apiBaseRateType}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Calculated rate type</span>
+                                <span class="ca-detail-value">{calculatedRateTypeLabel}</span>
+                            </div>
+                            <div class="ca-cl-item">
+                                <span class="ca-detail-label">Clauses</span>
+                                <span class="ca-detail-value slds-text-color_weak">—</span>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </template>
+
             </template>
 
             <!-- ─── RATE & DATE ────────────────────────────────────────────────── -->
             <div class="ca-section-header">RATE &amp; DATE</div>
             <div class="ca-section-body">
-                <p class="ca-help-text">
-                    The ordinary hourly rate is pre-populated from the award data and
-                    can be adjusted if a different rate applies. The effective date
-                    determines when this configuration takes effect.
-                </p>
-
-                <div class="slds-form slds-form_stacked">
+                <div class="ca-field-row">
                     <template if:true={isCasual}>
-                        <div class="slds-form-element slds-m-bottom_small">
+                        <div class="ca-field-col">
                             <lightning-input
                                 type="number"
                                 label="Casual Loading %"
@@ -180,8 +192,7 @@
                             </lightning-input>
                         </div>
                     </template>
-
-                    <div class="slds-form-element slds-m-bottom_small">
+                    <div class="ca-field-col">
                         <lightning-input
                             type="date"
                             label="Effective Date"
