@@ -62,7 +62,9 @@ async def list_classifications(
                 "classification": r.classification,
                 "classification_level": r.classification_level,
                 "base_rate": r.base_rate,
+                "base_rate_type": r.base_rate_type or "Weekly",
                 "calculated_rate": r.calculated_rate,
+                "calculated_rate_type": r.calculated_rate_type or "Hourly",
                 "employment_type": r.employee_rate_type_code,
             }
             for r in rows
