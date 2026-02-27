@@ -1,4 +1,4 @@
-public with sharing class AwardConfigurationController {
+public without sharing class AwardConfigurationController {
 
     private static final String SETTINGS_RECORD = 'Default';
 
