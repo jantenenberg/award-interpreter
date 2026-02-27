@@ -79,6 +79,8 @@ export default class ConfigureAward extends LightningElement {
     async loadCurrentConfig() {
         try {
             const config = await getCurrentConfiguration({ configId: this.recordId });
+            if (!config) return;
+
             this.resourceName = config.Resource__r?.Name || '';
             this.isAlreadyConfigured = config.Configured__c;
 

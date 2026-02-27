@@ -131,7 +131,8 @@ public with sharing class AwardConfigurationController {
 
     @AuraEnabled(cacheable=true)
     public static Award_Configuration__c getCurrentConfiguration(Id configId) {
-        return [
+        if (configId == null) return null;
+        List<Award_Configuration__c> records = [
             SELECT Id, Award_Code__c, Award_Name__c, Employment_Type__c,
                    Classification__c, Classification_Level__c,
                    Casual_Loading_Percent__c, Effective_Date__c,
@@ -141,6 +142,7 @@ public with sharing class AwardConfigurationController {
             WHERE Id = :configId
             LIMIT 1
         ];
+        return records.isEmpty() ? null : records[0];
     }
 
     // ── Inner classes ────────────────────────────────────────────────────────

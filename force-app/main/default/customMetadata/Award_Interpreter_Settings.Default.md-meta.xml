@@ -6,11 +6,11 @@
     <protected>false</protected>
     <values>
         <field>Org_ID__c</field>
-        <value xsi:type="xsd:string">YOUR_SALESFORCE_ORG_ID</value>
+        <value xsi:type="xsd:string">00DWU00000I33LZ</value>
     </values>
     <values>
         <field>API_Key__c</field>
-        <value xsi:type="xsd:string">YOUR_API_KEY</value>
+        <value xsi:type="xsd:string">ai_jCcKbkSgbIaa7uDRw0zUoWCy1Ac8QHJxFFpbeKVKlHE</value>
     </values>
     <values>
         <field>API_Base_URL__c</field>
