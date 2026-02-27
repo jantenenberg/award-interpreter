@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,11 +9,16 @@ from app.services.auth import validate_api_key
 
 
 async def require_api_key(
-    x_org_id: str = Header(..., alias="X-Org-ID"),
-    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_org_id: Optional[str] = Header(None, alias="X-Org-ID"),
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     db: Session = Depends(get_db),
 ):
     """Requires both X-Org-ID and X-API-Key headers. Both must match."""
+    if not x_org_id or not x_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing Org ID / API key combination.",
+        )
     api_key = validate_api_key(db, x_org_id, x_api_key)
     if not api_key:
         raise HTTPException(
