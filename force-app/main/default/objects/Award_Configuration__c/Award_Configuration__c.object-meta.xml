@@ -13,10 +13,11 @@
         <fullName>Resource__c</fullName>
         <label>Resource</label>
         <type>Lookup</type>
-        <referenceTo>Resource__c</referenceTo>
+        <referenceTo>maica_cc__Resource__c</referenceTo>
         <relationshipName>Award_Configurations</relationshipName>
         <relationshipLabel>Award Configurations</relationshipLabel>
         <required>true</required>
+        <deleteConstraint>Restrict</deleteConstraint>
     </fields>
     <fields>
         <fullName>Award_Code__c</fullName>

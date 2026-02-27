@@ -3,7 +3,9 @@ private class AwardConfigurationControllerTest {
 
     @testSetup
     static void setup() {
-        Resource__c resource = new Resource__c(Name = 'Test Resource');
+        maica_cc__Resource__c resource = new maica_cc__Resource__c(
+            Name = 'Test Resource'
+        );
         insert resource;
 
         Award_Configuration__c config = new Award_Configuration__c(
@@ -54,11 +56,12 @@ private class AwardConfigurationControllerTest {
 
     @isTest
     static void testDeactivatesOtherConfigsOnSave() {
-        Resource__c resource = [SELECT Id FROM Resource__c LIMIT 1];
+        Award_Configuration__c setupConfig = [
+            SELECT Resource__c FROM Award_Configuration__c LIMIT 1
+        ];
 
-        // Create a second config that is already active for the same award
         Award_Configuration__c other = new Award_Configuration__c(
-            Resource__c = resource.Id,
+            Resource__c = setupConfig.Resource__c,
             Award_Code__c = 'MA000004',
             Is_Active__c = true,
             Configured__c = true

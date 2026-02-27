@@ -65,12 +65,6 @@
         <field>Award_Configuration__c.Configured__c</field>
         <readable>true</readable>
     </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Award_Configuration__c.Resource__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-
     <!-- Apex class access -->
     <classAccesses>
         <apexClass>AwardConfigurationController</apexClass>
