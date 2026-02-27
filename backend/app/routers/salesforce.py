@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db_optional
+from app.database import get_db, get_db_optional
 from app.dependencies import require_api_key
 from app.models.db_models import Award, Classification
 
@@ -32,19 +32,18 @@ async def list_awards(
     }
 
 
-@router.get("/classifications/{award_code}", dependencies=[Depends(require_api_key)])
+@router.get("/classifications/{award_code}")
 async def list_classifications(
     award_code: str,
     employment_type: Optional[str] = Query(None),
-    db: Optional[Session] = Depends(get_db_optional),
+    db: Session = Depends(get_db),
+    _=Depends(require_api_key),
 ):
     """
     Return classifications for an award, filtered by employment_type when supplied.
     AD (applies-to-all) rows are always included.
     Requires X-Org-ID + X-API-Key authentication.
     """
-    if not db:
-        return {"classifications": []}
     query = db.query(Classification).filter(
         Classification.award_code == award_code
     )
