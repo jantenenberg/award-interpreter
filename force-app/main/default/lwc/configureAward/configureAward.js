@@ -144,9 +144,13 @@ export default class ConfigureAward extends LightningElement {
             if (config == null) return;
 
             this.resourceName = config?.Resource__r?.Name ?? '';
-            this.isAlreadyConfigured = config?.Configured__c ?? false;
 
-            if (config.Configured__c) {
+            // Pre-fill from any previously-saved fields, not just when Configured__c = true.
+            // This ensures opening an existing record always restores its data.
+            const hasSavedData = !!(config?.Award_Code__c || config?.Classification__c);
+            this.isAlreadyConfigured = hasSavedData;
+
+            if (hasSavedData) {
                 this.selectedAwardCode = config?.Award_Code__c ?? '';
                 this.selectedAwardName = config?.Award_Name__c ?? '';
                 this.selectedEmploymentType = config?.Employment_Type__c ?? '';
