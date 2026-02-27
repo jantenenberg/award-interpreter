@@ -100,22 +100,24 @@ export default class ConfigureAward extends LightningElement {
     // ── Data loading ──────────────────────────────────────────────────────────
 
     async loadCurrentConfig() {
+        // No record context — new record or action launched outside a record page
+        if (!this.recordId) return;
         try {
             const config = await getCurrentConfiguration({ configId: this.recordId });
-            if (!config) return;
+            if (config == null) return;
 
-            this.resourceName = config.Resource__r?.Name || '';
-            this.isAlreadyConfigured = config.Configured__c;
+            this.resourceName = config?.Resource__r?.Name ?? '';
+            this.isAlreadyConfigured = config?.Configured__c ?? false;
 
             if (config.Configured__c) {
-                this.selectedAwardCode = config.Award_Code__c || '';
-                this.selectedAwardName = config.Award_Name__c || '';
-                this.selectedEmploymentType = config.Employment_Type__c || '';
-                this.selectedClassification = config.Classification__c || '';
-                this.selectedClassificationLevel = config.Classification_Level__c;
-                this.casualLoadingPercent = config.Casual_Loading_Percent__c ?? 25;
-                this.effectiveDate = config.Effective_Date__c || new Date().toISOString().slice(0, 10);
-                this.editableRate = config.Ordinary_Hourly_Rate__c
+                this.selectedAwardCode = config?.Award_Code__c ?? '';
+                this.selectedAwardName = config?.Award_Name__c ?? '';
+                this.selectedEmploymentType = config?.Employment_Type__c ?? '';
+                this.selectedClassification = config?.Classification__c ?? '';
+                this.selectedClassificationLevel = config?.Classification_Level__c ?? null;
+                this.casualLoadingPercent = config?.Casual_Loading_Percent__c ?? 25;
+                this.effectiveDate = config?.Effective_Date__c ?? new Date().toISOString().slice(0, 10);
+                this.editableRate = config?.Ordinary_Hourly_Rate__c != null
                     ? config.Ordinary_Hourly_Rate__c.toFixed(4)
                     : null;
 
@@ -124,7 +126,10 @@ export default class ConfigureAward extends LightningElement {
                 }
             }
         } catch (e) {
-            this.errorMessage = 'Failed to load configuration: ' + (e.body?.message || e.message);
+            // Swallow errors that simply mean no configuration exists yet
+            const msg = e?.body?.message ?? e?.message ?? '';
+            if (msg.includes('no rows') || msg.includes('Resource__r') || msg.includes('null')) return;
+            this.errorMessage = 'Failed to load configuration: ' + msg;
         }
     }
 
