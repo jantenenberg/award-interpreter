@@ -17,13 +17,21 @@
 
             <!-- ─── RESOURCE BANNER (no section header) ───────────────────────── -->
             <div class="ca-resource-banner">
-                <template if:true={resourceName}>
-                    <lightning-icon icon-name="standard:contact" size="x-small" class="ca-resource-icon"></lightning-icon>
-                    <span>Configuring award for <strong>{resourceName}</strong></span>
-                </template>
-                <template if:false={resourceName}>
-                    <lightning-icon icon-name="utility:warning" size="x-small" class="ca-resource-icon ca-resource-icon_warn"></lightning-icon>
-                    <span class="slds-text-color_weak">No resource linked to this record.</span>
+                <div class="ca-resource-banner-left">
+                    <template if:true={resourceName}>
+                        <lightning-icon icon-name="standard:contact" size="x-small" class="ca-resource-icon"></lightning-icon>
+                        <span>Configuring award for <strong>{resourceName}</strong></span>
+                    </template>
+                    <template if:false={resourceName}>
+                        <lightning-icon icon-name="utility:warning" size="x-small" class="ca-resource-icon ca-resource-icon_warn"></lightning-icon>
+                        <span class="slds-text-color_weak">No resource linked to this record.</span>
+                    </template>
+                </div>
+                <template if:true={isPrimary}>
+                    <span class="ca-primary-badge">
+                        <lightning-icon icon-name="utility:check" size="xx-small" class="ca-primary-badge-icon"></lightning-icon>
+                        Primary
+                    </span>
                 </template>
             </div>
 
@@ -210,6 +218,12 @@
             <lightning-button
                 label="Cancel"
                 onclick={handleCancel}
+                class="slds-m-right_x-small">
+            </lightning-button>
+            <lightning-button
+                label="Set as Primary"
+                onclick={handleSetAsPrimary}
+                disabled={isSetAsPrimaryDisabled}
                 class="slds-m-right_x-small">
             </lightning-button>
             <lightning-button

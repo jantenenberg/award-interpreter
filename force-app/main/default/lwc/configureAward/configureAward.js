@@ -5,6 +5,7 @@ import getAwards from '@salesforce/apex/AwardConfigurationController.getAwards';
 import getClassifications from '@salesforce/apex/AwardConfigurationController.getClassifications';
 import saveConfiguration from '@salesforce/apex/AwardConfigurationController.saveConfiguration';
 import getCurrentConfiguration from '@salesforce/apex/AwardConfigurationController.getCurrentConfiguration';
+import setAsPrimary from '@salesforce/apex/AwardConfigurationController.setAsPrimary';
 
 const EMPLOYMENT_TYPE_OPTIONS = [
     { label: 'Full-time', value: 'FT' },
@@ -36,6 +37,7 @@ export default class ConfigureAward extends LightningElement {
 
     // Context
     @track resourceName = '';
+    @track isPrimary = false;
 
     // Award / employment type
     @track awardOptions = [];
@@ -101,6 +103,10 @@ export default class ConfigureAward extends LightningElement {
         return this.classificationExpanded ? 'utility:chevronup' : 'utility:chevrondown';
     }
 
+    get isSetAsPrimaryDisabled() {
+        return this.isPrimary;
+    }
+
     get isSaveDisabled() {
         return !this.selectedAwardCode ||
                !this.selectedEmploymentType ||
@@ -132,6 +138,7 @@ export default class ConfigureAward extends LightningElement {
             if (config == null) return;
 
             this.resourceName = config?.Resource__r?.Name ?? '';
+            this.isPrimary = config?.Is_Primary__c ?? false;
 
             // Pre-fill from any previously-saved fields, not just when Configured__c = true.
             // This ensures opening an existing record always restores its data.
@@ -304,7 +311,7 @@ export default class ConfigureAward extends LightningElement {
         this.errorMessage = '';
         this.isLoading = true;
         try {
-            await saveConfiguration({
+            const autoSetPrimary = await saveConfiguration({
                 configId: this.recordId,
                 awardCode: this.selectedAwardCode,
                 awardName: this.selectedAwardName,
@@ -316,14 +323,38 @@ export default class ConfigureAward extends LightningElement {
                 ordinaryHourlyRate: this.editableRate ? parseFloat(this.editableRate) : null,
             });
 
+            if (autoSetPrimary) {
+                this.isPrimary = true;
+            }
+
             this.dispatchEvent(new ShowToastEvent({
                 title: 'Success',
-                message: 'Award configuration saved.',
+                message: autoSetPrimary
+                    ? 'Award configuration saved and set as primary.'
+                    : 'Award configuration saved.',
                 variant: 'success',
             }));
             this.dispatchEvent(new CloseActionScreenEvent());
         } catch (e) {
             this.errorMessage = 'Save failed: ' + (e.body?.message || e.message);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    async handleSetAsPrimary() {
+        this.errorMessage = '';
+        this.isLoading = true;
+        try {
+            await setAsPrimary({ configId: this.recordId });
+            this.isPrimary = true;
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Primary Updated',
+                message: 'This is now the primary award configuration for this resource.',
+                variant: 'success',
+            }));
+        } catch (e) {
+            this.errorMessage = 'Failed to set as primary: ' + (e.body?.message || e.message);
         } finally {
             this.isLoading = false;
         }

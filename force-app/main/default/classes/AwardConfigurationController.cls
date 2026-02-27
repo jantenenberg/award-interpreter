@@ -85,7 +85,7 @@ public without sharing class AwardConfigurationController {
     }
 
     @AuraEnabled
-    public static void saveConfiguration(
+    public static Boolean saveConfiguration(
         Id configId,
         String awardCode,
         String awardName,
@@ -96,9 +96,9 @@ public without sharing class AwardConfigurationController {
         Date effectiveDate,
         Decimal ordinaryHourlyRate
     ) {
-        // Read current record to get Resource__c
+        // Read current record to get Resource__c and current primary state
         Award_Configuration__c config = [
-            SELECT Id, Resource__c
+            SELECT Id, Resource__c, Is_Primary__c
             FROM Award_Configuration__c
             WHERE Id = :configId
             LIMIT 1
@@ -118,6 +118,20 @@ public without sharing class AwardConfigurationController {
         }
         if (!others.isEmpty()) update others;
 
+        // Auto-primary: set if no other primary exists for this resource (rules 1 + 2)
+        Boolean hasPrimary = false;
+        if (config.Resource__c != null) {
+            hasPrimary = [
+                SELECT COUNT() FROM Award_Configuration__c
+                WHERE Resource__c = :config.Resource__c
+                AND Is_Primary__c = true
+                AND Id != :configId
+            ] > 0;
+        }
+        if (!hasPrimary) {
+            config.Is_Primary__c = true;
+        }
+
         // Update the current record
         config.Award_Code__c = awardCode;
         config.Award_Name__c = awardName;
@@ -130,6 +144,36 @@ public without sharing class AwardConfigurationController {
         config.Is_Active__c = true;
         config.Configured__c = true;
         update config;
+
+        return config.Is_Primary__c;
+    }
+
+    @AuraEnabled
+    public static void setAsPrimary(Id configId) {
+        Award_Configuration__c config = [
+            SELECT Id, Resource__c
+            FROM Award_Configuration__c
+            WHERE Id = :configId
+            LIMIT 1
+        ];
+
+        // Rule 3 + 4: clear primary from all siblings, then set this one
+        if (config.Resource__c != null) {
+            List<Award_Configuration__c> siblings = [
+                SELECT Id
+                FROM Award_Configuration__c
+                WHERE Resource__c = :config.Resource__c
+                AND Is_Primary__c = true
+                AND Id != :configId
+            ];
+            for (Award_Configuration__c s : siblings) {
+                s.Is_Primary__c = false;
+            }
+            if (!siblings.isEmpty()) update siblings;
+        }
+
+        config.Is_Primary__c = true;
+        update config;
     }
 
     @AuraEnabled
@@ -140,7 +184,7 @@ public without sharing class AwardConfigurationController {
                    Classification__c, Classification_Level__c,
                    Casual_Loading_Percent__c, Effective_Date__c,
                    Ordinary_Hourly_Rate__c, Is_Active__c, Configured__c,
-                   Resource__c, Resource__r.Name
+                   Is_Primary__c, Resource__c, Resource__r.Name
             FROM Award_Configuration__c
             WHERE Id = :configId
             LIMIT 1

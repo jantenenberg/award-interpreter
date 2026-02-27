@@ -96,4 +96,10 @@
         <type>Checkbox</type>
         <defaultValue>false</defaultValue>
     </fields>
+    <fields>
+        <fullName>Is_Primary__c</fullName>
+        <label>Is Primary</label>
+        <type>Checkbox</type>
+        <defaultValue>false</defaultValue>
+    </fields>
 </CustomObject>
