@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
   <style>
+    /* All doc-specific styles scoped to .doc-body so they never bleed into the shared app-header */
     .doc-body {
       font-family: inherit;
       line-height: 1.6;
@@ -20,46 +21,28 @@
       box-shadow: none;
       border-radius: 0;
     }
-    h1 {
+    .doc-body h1 {
       color: #2c3e50;
       border-bottom: 3px solid #3498db;
       padding-bottom: 10px;
       margin-bottom: 30px;
     }
-    h2 {
+    .doc-body h2 {
       color: #34495e;
       margin-top: 40px;
       margin-bottom: 20px;
       padding-bottom: 8px;
       border-bottom: 2px solid #ecf0f1;
     }
-    h3 {
+    .doc-body h3 {
       color: #555;
       margin-top: 25px;
       margin-bottom: 12px;
     }
-    .section {
+    .doc-body .section {
       margin-bottom: 40px;
     }
-    .file-list {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 6px;
-      margin: 15px 0;
-    }
-    .file-item {
-      margin: 10px 0;
-      padding: 10px;
-      background: white;
-      border-left: 4px solid #3498db;
-      padding-left: 15px;
-    }
-    .file-item strong {
-      color: #2980b9;
-      display: block;
-      margin-bottom: 5px;
-    }
-    code {
+    .doc-body code {
       background: #f4f4f4;
       padding: 2px 6px;
       border-radius: 3px;
@@ -67,7 +50,7 @@
       font-size: 0.9em;
       color: #e74c3c;
     }
-    pre {
+    .doc-body pre {
       background: #2c3e50;
       color: #ecf0f1;
       padding: 15px;
@@ -75,12 +58,12 @@
       overflow-x: auto;
       margin: 15px 0;
     }
-    pre code {
+    .doc-body pre code {
       background: none;
       color: inherit;
       padding: 0;
     }
-    .diagram {
+    .doc-body .diagram {
       background: #f8f9fa;
       border: 2px solid #ddd;
       padding: 20px;
@@ -89,61 +72,62 @@
       font-family: monospace;
       white-space: pre-wrap;
     }
-    .example {
+    .doc-body .example {
       background: #e8f5e9;
       border-left: 4px solid #4caf50;
       padding: 15px;
       margin: 15px 0;
     }
-    .example-title {
+    .doc-body .example-title {
       font-weight: bold;
       color: #2e7d32;
       margin-bottom: 10px;
     }
-    .warning {
+    .doc-body .warning {
       background: #fff3cd;
       border-left: 4px solid #ffc107;
       padding: 15px;
       margin: 15px 0;
     }
-    .info {
+    .doc-body .info {
       background: #d1ecf1;
       border-left: 4px solid #17a2b8;
       padding: 15px;
       margin: 15px 0;
     }
-    table {
+    .doc-body table {
       width: 100%;
       border-collapse: collapse;
       margin: 15px 0;
     }
-    th, td {
+    .doc-body th,
+    .doc-body td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #ddd;
     }
-    th {
+    .doc-body th {
       background: #34495e;
       color: white;
       font-weight: 600;
     }
-    tr:hover {
+    .doc-body tr:hover {
       background: #f5f5f5;
     }
-    .flow-diagram {
+    .doc-body .flow-diagram {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin: 20px 0;
     }
-    .flow-step {
+    .doc-body .flow-step {
       background: #3498db;
       color: white;
       padding: 15px;
       border-radius: 6px;
       position: relative;
     }
-    .flow-step::after {
+    .doc-body .flow-step::after {
       content: '↓';
       position: absolute;
       bottom: -25px;
@@ -152,14 +136,15 @@
       font-size: 24px;
       color: #3498db;
     }
-    .flow-step:last-child::after {
+    .doc-body .flow-step:last-child::after {
       display: none;
     }
-    ul, ol {
+    .doc-body ul,
+    .doc-body ol {
       margin-left: 20px;
       margin-top: 10px;
     }
-    li {
+    .doc-body li {
       margin: 8px 0;
     }
   </style>
