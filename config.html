@@ -233,9 +233,44 @@
       </header>
 
       <main class="config-container">
+
+        <!-- API Connection Section -->
+        <section class="config-section">
+          <h2>API Connection</h2>
+          <p>
+            The calculator loads award data from the backend API.
+            When running the frontend locally (without the backend), set the base URL of the deployed API here.
+            Leave blank when the frontend is served by the FastAPI backend itself (e.g. on Railway).
+          </p>
+          <div class="file-path-row">
+            <label>API Base URL:</label>
+            <input type="text" id="apiBaseUrl" placeholder="https://award-interpreter-production.up.railway.app" style="font-family:monospace;" />
+            <button onclick="saveApiBaseUrl()">Save</button>
+          </div>
+          <p id="apiUrlStatus" style="margin-top:8px;font-size:13px;color:#555;"></p>
+          <script>
+            (function() {
+              const saved = localStorage.getItem('apiBaseUrl') || '';
+              document.getElementById('apiBaseUrl').value = saved;
+              document.getElementById('apiUrlStatus').textContent =
+                saved ? `Currently using: ${saved}` : 'Currently using relative paths (default — correct for Railway deployment)';
+            })();
+            function saveApiBaseUrl() {
+              const val = (document.getElementById('apiBaseUrl').value || '').trim().replace(/\/$/, '');
+              if (val) {
+                localStorage.setItem('apiBaseUrl', val);
+                document.getElementById('apiUrlStatus').textContent = `Saved. Reload the Calculator tab to reconnect.`;
+              } else {
+                localStorage.removeItem('apiBaseUrl');
+                document.getElementById('apiUrlStatus').textContent = 'Cleared — using relative paths. Reload the Calculator tab.';
+              }
+            }
+          </script>
+        </section>
+
         <!-- File Configuration Section -->
         <section class="config-section">
-          <h2>1. File Configuration</h2>
+          <h2>File Configuration (legacy)</h2>
           <p>Configure the paths to your CSV data files. Changes are saved to browser storage.</p>
           
           <div id="filePathsContainer">

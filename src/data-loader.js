@@ -1,6 +1,19 @@
 // data-loader.js
 // Loads Fair Work MAP data from the backend API (database tables)
 // and exposes indexed data + simple subscription hooks to the UI.
+//
+// Local development: set the API base URL via:
+//   localStorage.setItem('apiBaseUrl', 'https://your-backend.up.railway.app')
+// This is only needed when the frontend is not served by the FastAPI backend itself
+// (e.g. python -m http.server 8000).
+
+function getApiBaseUrl() {
+  const saved = typeof localStorage !== "undefined" && localStorage.getItem("apiBaseUrl");
+  if (saved) return saved.replace(/\/$/, "");
+  return ""; // empty = relative paths, works when served by the FastAPI backend
+}
+
+const API_BASE = getApiBaseUrl();
 
 const DATA_STATE = {
   loaded: false,
@@ -58,6 +71,7 @@ async function fetchApiTable(path) {
 }
 
 async function loadAllCsv() {
+  const b = API_BASE;
   const [
     awardsRows,
     classificationRows,
@@ -65,11 +79,11 @@ async function loadAllCsv() {
     wageAllowanceRows,
     expenseAllowanceRows,
   ] = await Promise.all([
-    fetchApiTable("/api/v1/reference-data/awards?limit=500"),
-    fetchApiTable("/api/v1/reference-data/classifications?limit=20000"),
-    fetchApiTable("/api/v1/reference-data/penalties?limit=60000"),
-    fetchApiTable("/api/v1/reference-data/wage-allowances?limit=3000"),
-    fetchApiTable("/api/v1/reference-data/expense-allowances?limit=2000"),
+    fetchApiTable(`${b}/api/v1/reference-data/awards?limit=500`),
+    fetchApiTable(`${b}/api/v1/reference-data/classifications?limit=20000`),
+    fetchApiTable(`${b}/api/v1/reference-data/penalties?limit=60000`),
+    fetchApiTable(`${b}/api/v1/reference-data/wage-allowances?limit=3000`),
+    fetchApiTable(`${b}/api/v1/reference-data/expense-allowances?limit=2000`),
   ]);
 
   // Awards
@@ -329,8 +343,19 @@ async function initDataLoader() {
     }
     if (loadingDetail) {
       if (DATA_STATE.error) {
-        loadingDetail.textContent =
-          "Could not reach the data tables API. Check that the backend service is running.";
+        const isLocal =
+          typeof location !== "undefined" &&
+          (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+        if (isLocal && !API_BASE) {
+          loadingDetail.innerHTML =
+            "Running locally without a backend. Point the app at the deployed API by running this in your browser console:<br>" +
+            "<code style='user-select:all;background:#f1f5f9;padding:2px 6px;border-radius:3px;font-size:12px'>" +
+            "localStorage.setItem('apiBaseUrl','https://award-interpreter-production.up.railway.app')" +
+            "</code><br>Then reload the page."
+        } else {
+          loadingDetail.textContent =
+            `API error: ${DATA_STATE.error}`;
+        }
       } else {
         const awardsCount = DATA_STATE.awardsByCode.size;
         const classificationsCount = Array.from(

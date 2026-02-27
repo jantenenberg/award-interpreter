@@ -315,6 +315,12 @@
     <script type="module">
       const PAGE_SIZE = 200;
 
+      // Respect the same apiBaseUrl setting as data-loader.js
+      const API_BASE = (() => {
+        const saved = localStorage.getItem("apiBaseUrl");
+        return saved ? saved.replace(/\/$/, "") : "";
+      })();
+
       // ── helpers ──────────────────────────────────────────────────────────────
 
       function fmt(v) {
@@ -364,8 +370,9 @@
       // ── API calls ─────────────────────────────────────────────────────────────
 
       async function apiFetch(path) {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`${path} → ${res.status}`);
+        const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`${url} → ${res.status}`);
         return res.json();
       }
 
