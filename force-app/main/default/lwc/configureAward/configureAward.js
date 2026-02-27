@@ -15,7 +15,20 @@ const EMPLOYMENT_TYPE_OPTIONS = [
 const STANDARD_HOURS_PER_WEEK = 38;
 
 export default class ConfigureAward extends LightningElement {
-    @api recordId;
+    // Reactive setter — handles the case where Salesforce sets recordId *after*
+    // connectedCallback fires (common in Quick Actions on existing records).
+    _recordId;
+    _isConnected = false;
+
+    @api
+    get recordId() { return this._recordId; }
+    set recordId(value) {
+        const changed = this._recordId !== value;
+        this._recordId = value;
+        if (changed && value && this._isConnected) {
+            this.loadCurrentConfig();
+        }
+    }
 
     @track isLoading = true;
     @track loadingClassifications = false;
@@ -124,6 +137,7 @@ export default class ConfigureAward extends LightningElement {
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     async connectedCallback() {
+        this._isConnected = true;
         try {
             await Promise.all([
                 this.loadCurrentConfig(),

@@ -34,7 +34,8 @@
             <!-- ─── CURRENT CONFIGURATION (if editing existing) ─────────────── -->
             <template if:true={isAlreadyConfigured}>
                 <div class="ca-section-header ca-section-header_secondary">CURRENT CONFIGURATION</div>
-                <div class="ca-section-body ca-current-config">
+                <div class="ca-section-body">
+                <div class="ca-current-config">
                     <div class="ca-detail-grid">
                         <div class="ca-detail-item">
                             <span class="ca-detail-label">Award</span>
@@ -57,6 +58,7 @@
                             <span class="ca-detail-value">{currentEffectiveDateDisplay}</span>
                         </div>
                     </div>
+                </div>
                 </div>
             </template>
 
@@ -117,7 +119,8 @@
             <!-- ─── SELECTED CLASSIFICATION SUMMARY ──────────────────────────── -->
             <template if:true={showClassificationSummary}>
                 <div class="ca-section-header">SELECTED CLASSIFICATION</div>
-                <div class="ca-section-body ca-classification-panel">
+                <div class="ca-section-body">
+                <div class="ca-classification-panel">
 
                     <template if:true={isCasual}>
                         <div class="ca-casual-badge-row">
@@ -181,6 +184,7 @@
                         </div>
                     </div>
 
+                </div>
                 </div>
             </template>
 
