@@ -222,14 +222,21 @@
   <body>
     <div class="app-container">
       <header class="app-header">
-        <h1>Configuration & Data Management</h1>
-        <p>Configure file paths, define relationships, and fix data issues</p>
-        <nav style="margin-top: 12px;">
-          <a href="./index.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Calculator</a>
-          <a href="./config.html" style="margin-right: 16px; color: #3498db; text-decoration: none; font-weight: bold;">Configuration</a>
-          <a href="./documentation.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Documentation</a>
-          <a href="./reference-data.html" style="color: #3498db; text-decoration: none;">Reference Data</a>
-        </nav>
+        <div class="app-header-inner">
+          <div class="app-brand">
+            <img src="./assets/maica-logo.png" alt="Maica logo" class="app-logo" />
+            <div class="app-brand-text">
+              <h1>Maica Roster Costing Calculator</h1>
+              <p>Configure rate overrides, data issues and validation rules</p>
+            </div>
+          </div>
+          <nav class="app-nav">
+            <a href="./index.html">Calculator</a>
+            <a href="./config.html" style="font-weight:700;text-decoration:underline;">Configuration</a>
+            <a href="./documentation.html">Documentation</a>
+            <a href="./reference-data.html">Reference Data</a>
+          </nav>
+        </div>
       </header>
 
       <main class="config-container">
@@ -268,47 +275,10 @@
           </script>
         </section>
 
-        <!-- File Configuration Section -->
-        <section class="config-section">
-          <h2>File Configuration (legacy)</h2>
-          <p>Configure the paths to your CSV data files. Changes are saved to browser storage.</p>
-          
-          <div id="filePathsContainer">
-            <div class="file-path-row">
-              <label>Awards CSV:</label>
-              <input type="text" id="awardsPath" value="./data/source/map-award-export-2025.csv" />
-              <button onclick="testFile('awardsPath')">Test</button>
-            </div>
-            <div class="file-path-row">
-              <label>Classifications CSV:</label>
-              <input type="text" id="classificationsPath" value="./data/source/map-classification-export-2025.csv" />
-              <button onclick="testFile('classificationsPath')">Test</button>
-            </div>
-            <div class="file-path-row">
-              <label>Penalties CSV:</label>
-              <input type="text" id="penaltiesPath" value="./data/source/map-penalty-export-2025.csv" />
-              <button onclick="testFile('penaltiesPath')">Test</button>
-            </div>
-            <div class="file-path-row">
-              <label>Wage Allowances CSV:</label>
-              <input type="text" id="wageAllowancesPath" value="./data/source/map-wage-allowance-export-2025.csv" />
-              <button onclick="testFile('wageAllowancesPath')">Test</button>
-            </div>
-            <div class="file-path-row">
-              <label>Expense Allowances CSV:</label>
-              <input type="text" id="expenseAllowancesPath" value="./data/source/map-expense-allowance-export-2025.csv" />
-              <button onclick="testFile('expenseAllowancesPath')">Test</button>
-            </div>
-          </div>
-
-          <button class="save-config-btn" onclick="saveFilePaths()">Save File Paths</button>
-          <div id="filePathStatus" style="margin-top: 12px;"></div>
-        </section>
-
         <!-- Data Relationships Section -->
         <section class="config-section">
-          <h2>2. Data Relationships</h2>
-          <p>Define how data from different CSV files relates to each other.</p>
+          <h2>Rate Mappings</h2>
+          <p>Define classification and penalty rate mappings. These override values from the database tables.</p>
 
           <h3>2.1 Award-Classification Mapping</h3>
           <div class="mapping-controls">
@@ -339,7 +309,7 @@
             </thead>
             <tbody id="classificationMappingsTable">
               <tr>
-                <td colspan="6" style="text-align: center; color: #999;">No mappings defined. Data will use CSV relationships.</td>
+                <td colspan="6" style="text-align: center; color: #999;">No mappings defined. Data will use database values.</td>
               </tr>
             </tbody>
           </table>
@@ -376,7 +346,7 @@
             </thead>
             <tbody id="penaltyMappingsTable">
               <tr>
-                <td colspan="6" style="text-align: center; color: #999;">No overrides defined. Using CSV data.</td>
+                <td colspan="6" style="text-align: center; color: #999;">No overrides defined. Using database values.</td>
               </tr>
             </tbody>
           </table>
@@ -384,7 +354,7 @@
 
         <!-- Data Issues Section -->
         <section class="config-section">
-          <h2>3. Data Issues & Fixes</h2>
+          <h2>Data Issues & Fixes</h2>
           <p>Review and fix data validation issues detected by the system.</p>
 
           <div class="info" style="margin-bottom: 20px;">
@@ -417,8 +387,8 @@
 
         <!-- Rate Overrides Section -->
         <section class="config-section">
-          <h2>4. Rate Overrides</h2>
-          <p>Manually override rates when CSV data is incorrect or needs adjustment.</p>
+          <h2>Rate Overrides</h2>
+          <p>Manually override rates when database values need adjustment.</p>
 
           <h3>4.1 Classification Rate Overrides</h3>
           <table class="relationship-table">
@@ -465,7 +435,7 @@
 
         <!-- Validation Rules Section -->
         <section class="config-section">
-          <h2>5. Validation Rules</h2>
+          <h2>Validation Rules</h2>
           <p>Configure validation rules and thresholds for data quality checks.</p>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -502,7 +472,7 @@
 
         <!-- Export/Import Configuration -->
         <section class="config-section">
-          <h2>6. Export/Import Configuration</h2>
+          <h2>Export / Import Configuration</h2>
           <p>Export your configuration to a JSON file or import from a previously saved configuration.</p>
 
           <div style="display: flex; gap: 12px;">
@@ -516,35 +486,6 @@
 
     <script>
       // Global functions for inline event handlers
-      window.testFile = async function(pathId) {
-        const path = document.getElementById(pathId).value;
-        const statusDiv = document.getElementById('filePathStatus');
-        statusDiv.innerHTML = `<span class="status-badge status-warning">Testing ${path}...</span>`;
-        
-        try {
-          const response = await fetch(path, { method: 'HEAD' });
-          if (response.ok) {
-            statusDiv.innerHTML = `<span class="status-badge status-success">✓ File accessible</span>`;
-          } else {
-            statusDiv.innerHTML = `<span class="status-badge status-error">✗ File not found (${response.status})</span>`;
-          }
-        } catch (error) {
-          statusDiv.innerHTML = `<span class="status-badge status-error">✗ Error: ${error.message}</span>`;
-        }
-      };
-
-      window.saveFilePaths = function() {
-        const paths = {
-          awards: document.getElementById('awardsPath').value,
-          classifications: document.getElementById('classificationsPath').value,
-          penalties: document.getElementById('penaltiesPath').value,
-          wageAllowances: document.getElementById('wageAllowancesPath').value,
-          expenseAllowances: document.getElementById('expenseAllowancesPath').value,
-        };
-        localStorage.setItem('csvPaths', JSON.stringify(paths));
-        alert('File paths saved! Reload the main page to apply changes.');
-      };
-
       window.addClassificationMapping = function() {
         // Implemented in config-manager.js
         if (window.configManager) {
@@ -610,22 +551,6 @@
         }
       };
 
-      // Load saved paths on page load
-      window.addEventListener('DOMContentLoaded', () => {
-        const savedPaths = localStorage.getItem('csvPaths');
-        if (savedPaths) {
-          try {
-            const paths = JSON.parse(savedPaths);
-            if (paths.awards) document.getElementById('awardsPath').value = paths.awards;
-            if (paths.classifications) document.getElementById('classificationsPath').value = paths.classifications;
-            if (paths.penalties) document.getElementById('penaltiesPath').value = paths.penalties;
-            if (paths.wageAllowances) document.getElementById('wageAllowancesPath').value = paths.wageAllowances;
-            if (paths.expenseAllowances) document.getElementById('expenseAllowancesPath').value = paths.expenseAllowances;
-          } catch (e) {
-            console.error('Error loading saved paths:', e);
-          }
-        }
-      });
     </script>
   </body>
 </html>

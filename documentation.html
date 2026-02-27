@@ -3,27 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Award Interpreter - System Documentation</title>
+  <title>Documentation – Fair Work Award Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    .doc-body {
+      font-family: inherit;
       line-height: 1.6;
       color: #333;
-      background: #f5f5f5;
-      padding: 20px;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    .doc-body .container {
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+      border-radius: 0;
     }
     h1 {
       color: #2c3e50;
@@ -170,13 +165,28 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <nav style="margin-bottom: 24px;">
-      <a href="./index.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Calculator</a>
-      <a href="./config.html" style="margin-right: 16px; color: #3498db; text-decoration: none;">Configuration</a>
-      <a href="./documentation.html" style="margin-right: 16px; color: #3498db; text-decoration: none; font-weight: bold;">Documentation</a>
-      <a href="./reference-data.html" style="color: #3498db; text-decoration: none;">Reference Data</a>
-    </nav>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-brand">
+          <img src="./assets/maica-logo.png" alt="Maica logo" class="app-logo" />
+          <div class="app-brand-text">
+            <h1>Maica Roster Costing Calculator</h1>
+            <p>System documentation and architecture reference</p>
+          </div>
+        </div>
+        <nav class="app-nav">
+          <a href="./index.html">Calculator</a>
+          <a href="./config.html">Configuration</a>
+          <a href="./documentation.html" style="font-weight:700;text-decoration:underline;">Documentation</a>
+          <a href="./reference-data.html">Reference Data</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-content">
+    <div class="doc-body">
+    <div class="container">
     <h1>Award Interpreter - System Documentation</h1>
     <p style="font-size: 1.1em; color: #666; margin-bottom: 30px;">
       This document explains how the Award Interpreter processes Fair Work Australia MAP CSV files,
@@ -853,6 +863,9 @@ Total shift cost: $149.36</code></pre>
       <p><em>Documentation generated for Award Interpreter system</em></p>
       <p><em>Last updated: February 2026</em></p>
     </div>
-  </div>
+  </div><!-- /.container -->
+  </div><!-- /.doc-body -->
+  </main>
+  </div><!-- /.app-container -->
 </body>
 </html>
