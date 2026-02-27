@@ -20,7 +20,8 @@ from app.database import engine, Base
 from app.models import db_models  # noqa
 from scripts.seed_from_csv import (
     seed_awards, seed_classifications,
-    seed_wage_allowances, seed_expense_allowances
+    seed_wage_allowances, seed_expense_allowances,
+    seed_penalty_rates
 )
 from sqlalchemy.orm import sessionmaker
 
@@ -38,6 +39,7 @@ try:
     seed_classifications(session, os.path.join(BASE, 'map-classification-export-2025.csv'))
     seed_wage_allowances(session, os.path.join(BASE, 'map-wage-allowance-export-2025.csv'))
     seed_expense_allowances(session, os.path.join(BASE, 'map-expense-allowance-export-2025.csv'))
+    seed_penalty_rates(session, os.path.join(BASE, 'map-penalty-export-2025.csv'))
     print("All done. Database seeded successfully.")
 except Exception as e:
     session.rollback()

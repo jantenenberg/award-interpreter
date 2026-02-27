@@ -4,6 +4,7 @@ Implements rules from documentation.html with 6-minute segmentation and overtime
 """
 from datetime import date, datetime, timedelta
 from collections import defaultdict
+from typing import Optional
 import math
 
 from app.services.award_rules import (
@@ -232,5 +233,131 @@ def calculate_shift(
         "paid_hours": round(paid_hours, 2),
         "gross_pay": gross_pay,
         "segments": segments_out,
+        "warnings": warnings,
+    }
+
+
+def calculate_shift_from_rates(
+    shift_date: date,
+    start_time: str,
+    duration_hours: float,
+    break_minutes: float,
+    is_public_holiday: bool,
+    ordinary_rate: float,
+    saturday_rate: Optional[float],
+    sunday_rate: Optional[float],
+    public_holiday_rate: Optional[float],
+    overtime_first_rate: Optional[float],
+    overtime_after_rate: Optional[float],
+    casual_loading_percent: float = 0,
+) -> dict:
+    """
+    Calculate shift cost using pre-fetched base rates from the database.
+    casual_loading_percent is applied on top of every rate passed in.
+    Returns a dict compatible with calculate_shift output.
+    """
+    paid_hours_raw = max(duration_hours - break_minutes / 60.0, 0)
+    day_type = _day_type(shift_date, is_public_holiday)
+    loading = 1 + casual_loading_percent / 100.0
+
+    # Round loaded rates to 2 dp (matching existing rounding behaviour)
+    def _load(rate: float | None) -> float | None:
+        return _round_half_up(rate * loading, 2) if rate is not None else None
+
+    ord_rate = _load(ordinary_rate) or 0.0
+    sat_rate = _load(saturday_rate) or _round_half_up(ord_rate * 1.25, 2)
+    sun_rate = _load(sunday_rate) or _round_half_up(ord_rate * 1.50, 2)
+    ph_rate = _load(public_holiday_rate) or _round_half_up(ord_rate * 2.25, 2)
+    ot_first = _load(overtime_first_rate) or _round_half_up(ord_rate * 1.50, 2)
+    ot_after = _load(overtime_after_rate) or _round_half_up(ord_rate * 2.00, 2)
+
+    warnings: list[str] = []
+
+    # Minimum casual engagement (3 hours)
+    paid_hours = paid_hours_raw
+    if paid_hours_raw < MINIMUM_ENGAGEMENT_HOURS:
+        paid_hours = float(MINIMUM_ENGAGEMENT_HOURS)
+        warnings.append(
+            f"Minimum casual engagement of 3 hours applied (actual hours: {paid_hours_raw:.2f})"
+        )
+
+    segments: list[dict] = []
+
+    if day_type == "saturday":
+        effective_hours = paid_hours
+        cost = _round_half_up(effective_hours * sat_rate, 2)
+        segments.append({
+            "description": "Saturday - ordinary hours",
+            "hours": effective_hours,
+            "rate": sat_rate,
+            "cost": cost,
+            "penalty_key": "saturday_ordinary",
+        })
+
+    elif day_type == "sunday":
+        effective_hours = paid_hours
+        cost = _round_half_up(effective_hours * sun_rate, 2)
+        segments.append({
+            "description": "Sunday - ordinary hours",
+            "hours": effective_hours,
+            "rate": sun_rate,
+            "cost": cost,
+            "penalty_key": "sunday",
+        })
+
+    elif day_type == "public_holiday":
+        effective_hours = paid_hours
+        cost = _round_half_up(effective_hours * ph_rate, 2)
+        segments.append({
+            "description": "Public holiday",
+            "hours": effective_hours,
+            "rate": ph_rate,
+            "cost": cost,
+            "penalty_key": "publicholiday",
+        })
+
+    else:
+        # Weekday: ordinary hours up to threshold, then overtime
+        ordinary_threshold = float(ORDINARY_HOURS_THRESHOLD)
+        ordinary_hours = min(paid_hours, ordinary_threshold)
+        ord_cost = _round_half_up(ordinary_hours * ord_rate, 2)
+        segments.append({
+            "description": "Ordinary hours",
+            "hours": ordinary_hours,
+            "rate": ord_rate,
+            "cost": ord_cost,
+            "penalty_key": "ordinary",
+        })
+
+        if paid_hours > ordinary_threshold:
+            ot_hours = paid_hours - ordinary_threshold
+            first_ot = min(ot_hours, 3.0)
+            first_cost = _round_half_up(first_ot * ot_first, 2)
+            segments.append({
+                "description": "Ordinary hours (overtime - first 3 hours)",
+                "hours": first_ot,
+                "rate": ot_first,
+                "cost": first_cost,
+                "penalty_key": "ordinary",
+            })
+            if ot_hours > 3.0:
+                after_ot = ot_hours - 3.0
+                after_cost = _round_half_up(after_ot * ot_after, 2)
+                segments.append({
+                    "description": "Ordinary hours (overtime - beyond 3 hours)",
+                    "hours": after_ot,
+                    "rate": ot_after,
+                    "cost": after_cost,
+                    "penalty_key": "ordinary",
+                })
+
+    gross_pay = _round_half_up(sum(s["cost"] for s in segments), 2)
+
+    return {
+        "shift_date": shift_date,
+        "day_type": day_type,
+        "paid_hours": round(paid_hours, 2),
+        "gross_pay": gross_pay,
+        "segments": segments,
         "warnings": warnings,
     }

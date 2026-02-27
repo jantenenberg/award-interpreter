@@ -1,18 +1,27 @@
-# MA000004 — General Retail Industry Award 2020
-# Effective: 2024-07-01
-# All rates for Casual (CA) Adult employees
+"""
+Fallback constants used only when database is unavailable.
+In normal operation all rates come from the database.
+"""
 
 AWARD_CODE = "MA000004"
 RATES_VERSION = "2024-07-01"
 
-# Base weekly rate for Level 1
+# Last-resort fallback if DATABASE_URL is not set
 BASE_WEEKLY_RATE = 1008.90
 STANDARD_HOURS = 38
-
-# Default casual loading
 DEFAULT_CASUAL_LOADING = 0.25
 
-# Penalty multipliers — validated against Fair Work documentation
+# Minimum engagement for casual employees (hours)
+MINIMUM_ENGAGEMENT_HOURS = 3
+
+# Time of day boundaries
+EARLY_BOUNDARY = 7
+LATE_BOUNDARY = 18
+
+# Ordinary hours threshold before overtime kicks in
+ORDINARY_HOURS_THRESHOLD = 9
+
+# Penalty multipliers — used in rates.py endpoint and tests
 PENALTY_MULTIPLIERS = {
     "ordinary": 1.00,
     "weekday_early_late": 1.10,
@@ -23,29 +32,16 @@ PENALTY_MULTIPLIERS = {
     "publicholiday": 2.25,
 }
 
-# Overtime multipliers (applied on top of time-of-day penalty)
+# Overtime multipliers
 OVERTIME_MULTIPLIERS = {
     "first_3_hours": 1.50,
     "beyond_3_hours": 2.00,
 }
 
-# Ordinary hours threshold before overtime kicks in
-ORDINARY_HOURS_THRESHOLD = 9
 
-# Minimum engagement for casual employees (hours)
-MINIMUM_ENGAGEMENT_HOURS = 3
-
-# Time of day boundaries
-EARLY_BOUNDARY = 7    # Before 7am = early/late penalty
-LATE_BOUNDARY = 18    # After 6pm = early/late penalty (after 6pm Fri = friday_late)
-
-# Multiplier validation ranges — used to detect bad CSV data in Phase 2
-MULTIPLIER_RANGES = {
-    "ordinary":            (0.98, 1.02),
-    "weekday_early_late":  (1.08, 1.12),
-    "friday_late":         (1.13, 1.17),
-    "saturday":            (1.23, 1.27),
-    "saturday_ordinary":   (1.23, 1.27),
-    "sunday":              (1.48, 1.52),
-    "publicholiday":       (2.23, 2.27),
-}
+def get_ordinary_hourly_rate(base_weekly_rate: float, casual_loading_percent: float) -> float:
+    import math
+    loading = 1 + (casual_loading_percent / 100)
+    value = (base_weekly_rate / STANDARD_HOURS) * loading
+    exp = 10 ** 2
+    return math.floor(value * exp + 0.5) / exp

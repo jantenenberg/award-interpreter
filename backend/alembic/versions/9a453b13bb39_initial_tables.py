@@ -83,8 +83,27 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_expense_allowances_award_code'), 'expense_allowances', ['award_code'], unique=False)
 
+    op.create_table(
+        'penalty_rates',
+        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column('award_code', sa.String(), nullable=False),
+        sa.Column('employee_rate_type_code', sa.String(), nullable=False),
+        sa.Column('classification', sa.String(), nullable=False),
+        sa.Column('classification_level', sa.Integer(), nullable=False),
+        sa.Column('penalty_description', sa.String(), nullable=False),
+        sa.Column('rate', sa.Float(), nullable=True),
+        sa.Column('penalty_rate_unit', sa.String(), nullable=True),
+        sa.Column('penalty_calculated_value', sa.Float(), nullable=True),
+        sa.Column('operative_from', sa.Date(), nullable=True),
+        sa.Column('operative_to', sa.Date(), nullable=True),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_penalty_rates_award_code'), 'penalty_rates', ['award_code'], unique=False)
+
 
 def downgrade() -> None:
+    op.drop_index(op.f('ix_penalty_rates_award_code'), table_name='penalty_rates')
+    op.drop_table('penalty_rates')
     op.drop_index(op.f('ix_expense_allowances_award_code'), table_name='expense_allowances')
     op.drop_table('expense_allowances')
     op.drop_index(op.f('ix_wage_allowances_award_code'), table_name='wage_allowances')

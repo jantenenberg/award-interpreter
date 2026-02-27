@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -21,10 +22,85 @@ from app.models.schemas import (
     ShiftRosterResponse,
 )
 from app.services.award_rules import AWARD_CODE, RATES_VERSION, BASE_WEEKLY_RATE
-from app.services.calculator import calculate_shift, get_ordinary_hourly_rate
-from app.services.db_rates import get_base_weekly_rate
+from app.services.calculator import calculate_shift, calculate_shift_from_rates, get_ordinary_hourly_rate
+from app.services.db_rates import (
+    get_ordinary_rate, get_penalty_rate, get_overtime_rates, get_base_weekly_rate
+)
 
 router = APIRouter()
+
+
+def _fetch_rates_and_calculate(
+    db,
+    award_code: str,
+    employment_type: str,
+    classification_level: int,
+    casual_loading_percent: float,
+    shift_date,
+    start_time: str,
+    duration_hours: float,
+    break_minutes: float,
+    is_public_holiday: bool,
+) -> dict:
+    """Fetch rates from DB and calculate shift cost. Falls back to old engine if DB unavailable."""
+    if not db:
+        return calculate_shift(
+            shift_date=shift_date,
+            start_time=start_time,
+            duration_hours=duration_hours,
+            break_minutes=break_minutes,
+            is_public_holiday=is_public_holiday,
+            casual_loading_percent=casual_loading_percent,
+            base_weekly_rate=BASE_WEEKLY_RATE,
+        )
+    try:
+        ordinary = get_ordinary_rate(db, award_code, employment_type, classification_level)
+        _, sat_rate = get_penalty_rate(db, award_code, employment_type, classification_level, 'saturday')
+        _, sun_rate = get_penalty_rate(db, award_code, employment_type, classification_level, 'sunday')
+        _, ph_rate = get_penalty_rate(db, award_code, employment_type, classification_level, 'public_holiday')
+        ot = get_overtime_rates(db, award_code, employment_type, classification_level)
+
+        if ordinary is None:
+            base_weekly = get_base_weekly_rate(db, award_code, employment_type, classification_level)
+            ordinary = base_weekly / 38.0
+
+        return calculate_shift_from_rates(
+            shift_date=shift_date,
+            start_time=start_time,
+            duration_hours=duration_hours,
+            break_minutes=break_minutes,
+            is_public_holiday=is_public_holiday,
+            ordinary_rate=ordinary,
+            saturday_rate=sat_rate,
+            sunday_rate=sun_rate,
+            public_holiday_rate=ph_rate,
+            overtime_first_rate=ot['first_hours_calculated'],
+            overtime_after_rate=ot['after_hours_calculated'],
+            casual_loading_percent=casual_loading_percent,
+        )
+    except Exception:
+        return calculate_shift(
+            shift_date=shift_date,
+            start_time=start_time,
+            duration_hours=duration_hours,
+            break_minutes=break_minutes,
+            is_public_holiday=is_public_holiday,
+            casual_loading_percent=casual_loading_percent,
+            base_weekly_rate=BASE_WEEKLY_RATE,
+        )
+
+
+def _to_segments(result: dict) -> list[ShiftSegment]:
+    return [
+        ShiftSegment(
+            description=s["description"],
+            hours=s["hours"],
+            rate=s["rate"],
+            cost=s["cost"],
+            penalty_key=s.get("penalty_key", "ordinary"),
+        )
+        for s in result["segments"]
+    ]
 
 
 @router.post("/api/v1/calculate/shift", response_model=ShiftResponse)
@@ -34,38 +110,20 @@ async def calculate_single_shift(
     employment_type: str = "CA",
     classification_level: int = 1,
     casual_loading_percent: float = 25,
-    db: Session | None = Depends(get_db_optional),
+    db: Optional[Session] = Depends(get_db_optional),
 ):
-    try:
-        base_weekly_rate = get_base_weekly_rate(
-            db, award_code, employment_type, classification_level
-        ) if db else BASE_WEEKLY_RATE
-    except Exception:
-        base_weekly_rate = BASE_WEEKLY_RATE
-    result = calculate_shift(
-        shift_date=request.shift_date,
-        start_time=request.start_time,
-        duration_hours=request.duration_hours,
-        break_minutes=request.break_minutes,
-        is_public_holiday=request.is_public_holiday,
-        casual_loading_percent=casual_loading_percent,
-        base_weekly_rate=base_weekly_rate,
+    result = _fetch_rates_and_calculate(
+        db, award_code, employment_type, classification_level,
+        casual_loading_percent,
+        request.shift_date, request.start_time, request.duration_hours,
+        request.break_minutes, request.is_public_holiday,
     )
     return ShiftResponse(
         shift_date=result["shift_date"],
         day_type=result["day_type"],
         paid_hours=result["paid_hours"],
         gross_pay=result["gross_pay"],
-        segments=[
-            ShiftSegment(
-                description=s["description"],
-                hours=s["hours"],
-                rate=s["rate"],
-                cost=s["cost"],
-                penalty_key=s["penalty_key"],
-            )
-            for s in result["segments"]
-        ],
+        segments=_to_segments(result),
         warnings=result["warnings"],
     )
 
@@ -73,31 +131,19 @@ async def calculate_single_shift(
 @router.post("/api/v1/calculate/bulk", response_model=BulkShiftResponse)
 async def calculate_bulk_shifts(
     request: BulkShiftRequest,
-    db: Session | None = Depends(get_db_optional),
+    db: Optional[Session] = Depends(get_db_optional),
 ):
-    try:
-        base_weekly_rate = get_base_weekly_rate(
-            db,
-            award_code=request.award_code,
-            employment_type=request.employment_type,
-            classification_level=request.classification_level,
-        ) if db else BASE_WEEKLY_RATE
-    except Exception:
-        base_weekly_rate = BASE_WEEKLY_RATE
     all_warnings: list[str] = []
     shifts_out = []
     total_cost = 0.0
     total_hours = 0.0
 
     for req in request.shifts:
-        result = calculate_shift(
-            shift_date=req.shift_date,
-            start_time=req.start_time,
-            duration_hours=req.duration_hours,
-            break_minutes=req.break_minutes,
-            is_public_holiday=req.is_public_holiday,
-            casual_loading_percent=request.casual_loading_percent,
-            base_weekly_rate=base_weekly_rate,
+        result = _fetch_rates_and_calculate(
+            db, request.award_code, request.employment_type, request.classification_level,
+            request.casual_loading_percent,
+            req.shift_date, req.start_time, req.duration_hours,
+            req.break_minutes, req.is_public_holiday,
         )
         all_warnings.extend(result["warnings"])
         total_cost += result["gross_pay"]
@@ -108,16 +154,7 @@ async def calculate_bulk_shifts(
                 day_type=result["day_type"],
                 paid_hours=result["paid_hours"],
                 gross_pay=result["gross_pay"],
-                segments=[
-                    ShiftSegment(
-                        description=s["description"],
-                        hours=s["hours"],
-                        rate=s["rate"],
-                        cost=s["cost"],
-                        penalty_key=s["penalty_key"],
-                    )
-                    for s in result["segments"]
-                ],
+                segments=_to_segments(result),
                 warnings=result["warnings"],
             )
         )
@@ -136,7 +173,7 @@ async def calculate_bulk_shifts(
 @router.post("/api/v1/calculate/roster", response_model=RosterResponse)
 async def calculate_roster(
     request: RosterRequest,
-    db: Session | None = Depends(get_db_optional),
+    db: Optional[Session] = Depends(get_db_optional),
 ):
     roster_warnings: list[str] = []
     workers_out = []
@@ -144,29 +181,17 @@ async def calculate_roster(
     roster_total_hours = 0.0
 
     for worker in request.workers:
-        try:
-            base_weekly_rate = get_base_weekly_rate(
-                db,
-                award_code=worker.award_code,
-                employment_type=worker.employment_type,
-                classification_level=worker.classification_level,
-            ) if db else BASE_WEEKLY_RATE
-        except Exception:
-            base_weekly_rate = BASE_WEEKLY_RATE
         worker_cost = 0.0
         worker_hours = 0.0
         worker_warnings: list[str] = []
         shifts_out = []
 
         for req in worker.shifts:
-            result = calculate_shift(
-                shift_date=req.shift_date,
-                start_time=req.start_time,
-                duration_hours=req.duration_hours,
-                break_minutes=req.break_minutes,
-                is_public_holiday=req.is_public_holiday,
-                casual_loading_percent=worker.casual_loading_percent,
-                base_weekly_rate=base_weekly_rate,
+            result = _fetch_rates_and_calculate(
+                db, worker.award_code, worker.employment_type, worker.classification_level,
+                worker.casual_loading_percent,
+                req.shift_date, req.start_time, req.duration_hours,
+                req.break_minutes, req.is_public_holiday,
             )
             worker_warnings.extend(result["warnings"])
             worker_cost += result["gross_pay"]
@@ -177,16 +202,7 @@ async def calculate_roster(
                     day_type=result["day_type"],
                     paid_hours=result["paid_hours"],
                     gross_pay=result["gross_pay"],
-                    segments=[
-                        ShiftSegment(
-                            description=s["description"],
-                            hours=s["hours"],
-                            rate=s["rate"],
-                            cost=s["cost"],
-                            penalty_key=s["penalty_key"],
-                        )
-                        for s in result["segments"]
-                    ],
+                    segments=_to_segments(result),
                     warnings=result["warnings"],
                 )
             )
@@ -196,17 +212,13 @@ async def calculate_roster(
         roster_total_hours += worker_hours
 
         try:
-            _base = get_base_weekly_rate(
-                db,
-                award_code=worker.award_code,
-                employment_type=worker.employment_type,
-                classification_level=worker.classification_level,
+            base = get_base_weekly_rate(
+                db, worker.award_code, worker.employment_type, worker.classification_level
             ) if db else BASE_WEEKLY_RATE
         except Exception:
-            _base = BASE_WEEKLY_RATE
-        ordinary_hourly_rate = get_ordinary_hourly_rate(
-            _base, worker.casual_loading_percent
-        )
+            base = BASE_WEEKLY_RATE
+        ordinary_hourly_rate = get_ordinary_hourly_rate(base, worker.casual_loading_percent)
+
         workers_out.append(
             WorkerShiftResponse(
                 worker_id=worker.worker_id,
@@ -237,12 +249,12 @@ async def calculate_roster(
 @router.post("/api/v1/calculate/shift-roster", response_model=ShiftRosterResponse)
 async def calculate_shift_roster(
     request: ShiftRosterRequest,
-    db: Session | None = Depends(get_db_optional),
+    db: Optional[Session] = Depends(get_db_optional),
 ):
     workers_by_id = {w.worker_id: w for w in request.workers}
     all_warnings: list[str] = []
     shifts_out: list[ShiftRosterShiftResult] = []
-    worker_totals_map: dict[str, dict] = {}  # worker_id -> { total_hours, total_cost }
+    worker_totals_map: dict[str, dict] = {}
     roster_total_cost = 0.0
     roster_total_hours = 0.0
 
@@ -256,30 +268,26 @@ async def calculate_shift_roster(
             worker = workers_by_id.get(wid)
             if not worker:
                 continue
+
+            result = _fetch_rates_and_calculate(
+                db, worker.award_code, worker.employment_type, worker.classification_level,
+                worker.casual_loading_percent,
+                shift.shift_date, shift.start_time, shift.duration_hours,
+                shift.break_minutes, shift.is_public_holiday,
+            )
+
             try:
-                base_weekly_rate = get_base_weekly_rate(
-                    db,
-                    award_code=worker.award_code,
-                    employment_type=worker.employment_type,
-                    classification_level=worker.classification_level,
+                base = get_base_weekly_rate(
+                    db, worker.award_code, worker.employment_type, worker.classification_level
                 ) if db else BASE_WEEKLY_RATE
             except Exception:
-                base_weekly_rate = BASE_WEEKLY_RATE
-            result = calculate_shift(
-                shift_date=shift.shift_date,
-                start_time=shift.start_time,
-                duration_hours=shift.duration_hours,
-                break_minutes=shift.break_minutes,
-                is_public_holiday=shift.is_public_holiday,
-                casual_loading_percent=worker.casual_loading_percent,
-                base_weekly_rate=base_weekly_rate,
-            )
-            ordinary_hourly_rate = get_ordinary_hourly_rate(
-                base_weekly_rate, worker.casual_loading_percent
-            )
+                base = BASE_WEEKLY_RATE
+            ordinary_hourly_rate = get_ordinary_hourly_rate(base, worker.casual_loading_percent)
+
             wage_allowance = shift.wage_allowance_costs_by_worker.get(wid, 0.0)
             expense_allowance = shift.expense_allowance_costs_by_worker.get(wid, 0.0)
             gross_with_allowances = result["gross_pay"] + wage_allowance + expense_allowance
+
             if not shift_worker_results:
                 first_day_type = result["day_type"]
 
@@ -296,16 +304,7 @@ async def calculate_shift_roster(
                     gross_pay=round(gross_with_allowances, 2),
                     wage_allowance_cost=round(wage_allowance, 2),
                     expense_allowance_cost=round(expense_allowance, 2),
-                    segments=[
-                        ShiftSegment(
-                            description=s["description"],
-                            hours=s["hours"],
-                            rate=s["rate"],
-                            cost=s["cost"],
-                            penalty_key=s["penalty_key"],
-                        )
-                        for s in result["segments"]
-                    ],
+                    segments=_to_segments(result),
                     warnings=result["warnings"],
                 )
             )

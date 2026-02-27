@@ -16,7 +16,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 load_dotenv()
 
 from app.database import engine, Base
-from app.models.db_models import Award, Classification, WageAllowance, ExpenseAllowance
+from app.models.db_models import Award, Classification, WageAllowance, ExpenseAllowance, PenaltyRate
 from sqlalchemy.orm import sessionmaker
 
 Session = sessionmaker(bind=engine)
@@ -149,6 +149,34 @@ def seed_expense_allowances(session, csv_path):
     print(f"  → {count} expense allowances seeded")
 
 
+def seed_penalty_rates(session, csv_path):
+    print(f"Seeding penalty rates from {csv_path}...")
+    session.query(PenaltyRate).delete()
+    count = 0
+    with open(csv_path, newline='', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if not row.get('awardCode', '').strip():
+                continue
+            session.add(PenaltyRate(
+                award_code=row.get('awardCode', '').strip(),
+                employee_rate_type_code=row.get('employeeRateTypeCode', '').strip(),
+                classification=row.get('classification', '').strip(),
+                classification_level=parse_int(row.get('classificationLevel', '')) or 1,
+                penalty_description=row.get('penaltyDescription', '').strip(),
+                rate=parse_float(row.get('rate', '')),
+                penalty_rate_unit=row.get('penaltyRateUnit', '').strip() or None,
+                penalty_calculated_value=parse_float(row.get('penaltyCalculatedValue', '')),
+                operative_from=parse_date(row.get('operativeFrom', '')),
+                operative_to=parse_date(row.get('operativeTo', '')),
+            ))
+            count += 1
+            if count % 5000 == 0:
+                session.flush()
+    session.commit()
+    print(f"  → {count} penalty rates seeded")
+
+
 if __name__ == '__main__':
     BASE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'source')
 
@@ -169,6 +197,8 @@ if __name__ == '__main__':
             os.path.join(BASE, 'map-wage-allowance-export-2025.csv'))
         seed_expense_allowances(session,
             os.path.join(BASE, 'map-expense-allowance-export-2025.csv'))
+        seed_penalty_rates(session,
+            os.path.join(BASE, 'map-penalty-export-2025.csv'))
         print("\nAll done. Database seeded successfully.")
     except Exception as e:
         session.rollback()

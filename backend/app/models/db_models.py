@@ -58,3 +58,19 @@ class ExpenseAllowance(Base):
     payment_frequency = Column(String, nullable=True)
     operative_from = Column(Date, nullable=True)
     operative_to = Column(Date, nullable=True)
+
+
+class PenaltyRate(Base):
+    __tablename__ = "penalty_rates"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    award_code = Column(String, index=True, nullable=False)
+    employee_rate_type_code = Column(String, nullable=False)
+    classification = Column(String, nullable=False)
+    classification_level = Column(Integer, nullable=False)
+    penalty_description = Column(String, nullable=False)
+    rate = Column(Float, nullable=True)
+    penalty_rate_unit = Column(String, nullable=True)
+    penalty_calculated_value = Column(Float, nullable=True)
+    operative_from = Column(Date, nullable=True)
+    operative_to = Column(Date, nullable=True)

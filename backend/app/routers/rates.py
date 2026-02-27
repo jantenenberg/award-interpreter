@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -31,7 +32,7 @@ async def get_rates(
     employment_type: str,
     classification_level: int = 1,
     casual_loading_percent: float = 25,
-    db: Session | None = Depends(get_db_optional),
+    db: Optional[Session] = Depends(get_db_optional),
 ):
     try:
         if db:
@@ -67,7 +68,7 @@ async def get_worker_classification(
     employment_type: str,
     classification_level: int,
     casual_loading_percent: float = 25,
-    db: Session | None = Depends(get_db_optional),
+    db: Optional[Session] = Depends(get_db_optional),
 ):
     details = None
     if db:

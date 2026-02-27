@@ -6,7 +6,7 @@ import math
 import pytest
 from datetime import date
 
-from app.services.calculator import calculate_shift, get_ordinary_hourly_rate
+from app.services.calculator import calculate_shift, calculate_shift_from_rates, get_ordinary_hourly_rate
 from app.services.award_rules import BASE_WEEKLY_RATE
 
 
