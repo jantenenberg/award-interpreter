@@ -20,8 +20,7 @@
             <div class="ca-section-body">
                 <template if:true={resourceName}>
                     <p class="ca-resource-label">
-                        Configuring award for
-                        <strong>{resourceName}</strong>
+                        Configuring award for <strong>{resourceName}</strong>
                     </p>
                 </template>
                 <template if:false={resourceName}>
@@ -30,37 +29,6 @@
                     </p>
                 </template>
             </div>
-
-            <!-- ─── CURRENT CONFIGURATION (if editing existing) ─────────────── -->
-            <template if:true={isAlreadyConfigured}>
-                <div class="ca-section-header ca-section-header_secondary">CURRENT CONFIGURATION</div>
-                <div class="ca-section-body">
-                <div class="ca-current-config">
-                    <div class="ca-detail-grid">
-                        <div class="ca-detail-item">
-                            <span class="ca-detail-label">Award</span>
-                            <span class="ca-detail-value">{currentAwardDisplay}</span>
-                        </div>
-                        <div class="ca-detail-item">
-                            <span class="ca-detail-label">Classification</span>
-                            <span class="ca-detail-value">{currentClassificationDisplay}</span>
-                        </div>
-                        <div class="ca-detail-item">
-                            <span class="ca-detail-label">Employment Type</span>
-                            <span class="ca-detail-value">{currentEmploymentTypeDisplay}</span>
-                        </div>
-                        <div class="ca-detail-item">
-                            <span class="ca-detail-label">Ordinary Hourly Rate</span>
-                            <span class="ca-detail-value ca-detail-value_rate">{currentRateDisplay}</span>
-                        </div>
-                        <div class="ca-detail-item">
-                            <span class="ca-detail-label">Effective Date</span>
-                            <span class="ca-detail-value">{currentEffectiveDateDisplay}</span>
-                        </div>
-                    </div>
-                </div>
-                </div>
-            </template>
 
             <!-- ─── AWARD SELECTION ───────────────────────────────────────────── -->
             <div class="ca-section-header">AWARD SELECTION</div>

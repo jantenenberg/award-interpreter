@@ -36,16 +36,6 @@ export default class ConfigureAward extends LightningElement {
 
     // Context
     @track resourceName = '';
-    @track isAlreadyConfigured = false;
-
-    // Snapshot of the saved configuration — used to display "Current Configuration"
-    _savedAwardCode = '';
-    _savedAwardName = '';
-    _savedClassification = '';
-    _savedClassificationLevel = null;
-    _savedEmploymentType = '';
-    _savedRate = null;
-    _savedEffectiveDate = '';
 
     // Award / employment type
     @track awardOptions = [];
@@ -107,33 +97,6 @@ export default class ConfigureAward extends LightningElement {
                !this.effectiveDate;
     }
 
-    // ── Current configuration display helpers ─────────────────────────────────
-
-    get currentAwardDisplay() {
-        return this._savedAwardCode
-            ? `${this._savedAwardCode} – ${this._savedAwardName}`
-            : '—';
-    }
-
-    get currentClassificationDisplay() {
-        return this._savedClassification
-            ? `Level ${this._savedClassificationLevel} — ${this._savedClassification}`
-            : '—';
-    }
-
-    get currentEmploymentTypeDisplay() {
-        const map = { FT: 'Full-time', PT: 'Part-time', CA: 'Casual' };
-        return map[this._savedEmploymentType] || this._savedEmploymentType || '—';
-    }
-
-    get currentRateDisplay() {
-        return this._savedRate != null ? `$${parseFloat(this._savedRate).toFixed(2)}/hour` : '—';
-    }
-
-    get currentEffectiveDateDisplay() {
-        return this._savedEffectiveDate || '—';
-    }
-
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     async connectedCallback() {
@@ -162,7 +125,6 @@ export default class ConfigureAward extends LightningElement {
             // Pre-fill from any previously-saved fields, not just when Configured__c = true.
             // This ensures opening an existing record always restores its data.
             const hasSavedData = !!(config?.Award_Code__c || config?.Classification__c);
-            this.isAlreadyConfigured = hasSavedData;
 
             if (hasSavedData) {
                 this.selectedAwardCode = config?.Award_Code__c ?? '';
@@ -175,15 +137,6 @@ export default class ConfigureAward extends LightningElement {
                 this.editableRate = config?.Ordinary_Hourly_Rate__c != null
                     ? config.Ordinary_Hourly_Rate__c.toFixed(4)
                     : null;
-
-                // Snapshot saved values for the "Current Configuration" summary
-                this._savedAwardCode = this.selectedAwardCode;
-                this._savedAwardName = this.selectedAwardName;
-                this._savedClassification = this.selectedClassification;
-                this._savedClassificationLevel = this.selectedClassificationLevel;
-                this._savedEmploymentType = this.selectedEmploymentType;
-                this._savedRate = config?.Ordinary_Hourly_Rate__c ?? null;
-                this._savedEffectiveDate = this.effectiveDate;
 
                 if (this.selectedAwardCode && this.selectedEmploymentType) {
                     await this.loadClassifications(false);
