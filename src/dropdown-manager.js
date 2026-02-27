@@ -64,7 +64,7 @@ function populateAwardsFromData() {
   placeholder.value = "";
   placeholder.textContent = awards.length
     ? `Select award (${awards.length} total)`
-    : "No awards found in CSV";
+    : "Loading from Reference Tables";
   awardSelect.appendChild(placeholder);
 
   for (const award of awards) {
