@@ -33,3 +33,4 @@ Thumbs.db
 
 # Optional: ignore local overrides of reference data if you use custom CSVs
 # data/source/
+data/source/
