@@ -3,13 +3,8 @@ private class AwardConfigurationControllerTest {
 
     @testSetup
     static void setup() {
-        maica_cc__Resource__c resource = new maica_cc__Resource__c(
-            Name = 'Test Resource'
-        );
-        insert resource;
-
+        // Resource__c is optional; tests focus on award configuration logic.
         Award_Configuration__c config = new Award_Configuration__c(
-            Resource__c = resource.Id,
             Configured__c = false
         );
         insert config;
@@ -56,12 +51,7 @@ private class AwardConfigurationControllerTest {
 
     @isTest
     static void testDeactivatesOtherConfigsOnSave() {
-        Award_Configuration__c setupConfig = [
-            SELECT Resource__c FROM Award_Configuration__c LIMIT 1
-        ];
-
         Award_Configuration__c other = new Award_Configuration__c(
-            Resource__c = setupConfig.Resource__c,
             Award_Code__c = 'MA000004',
             Is_Active__c = true,
             Configured__c = true
