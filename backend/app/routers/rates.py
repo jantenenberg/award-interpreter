@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
+from app.database import get_db_optional
 from app.models.schemas import RatesResponse, WorkerClassificationResponse, PenaltyRateDetail
 from app.services.award_rules import (
     AWARD_CODE,
@@ -8,6 +10,7 @@ from app.services.award_rules import (
     PENALTY_MULTIPLIERS,
 )
 from app.services.calculator import get_ordinary_hourly_rate
+from app.services.db_rates import get_classification_details, get_base_weekly_rate
 
 router = APIRouter()
 
@@ -28,8 +31,18 @@ async def get_rates(
     employment_type: str,
     classification_level: int = 1,
     casual_loading_percent: float = 25,
+    db: Session | None = Depends(get_db_optional),
 ):
-    ordinary_hourly_rate = get_ordinary_hourly_rate(BASE_WEEKLY_RATE, casual_loading_percent)
+    try:
+        if db:
+            base_weekly = get_base_weekly_rate(
+                db, award_code, employment_type, classification_level
+            )
+        else:
+            base_weekly = BASE_WEEKLY_RATE
+    except Exception:
+        base_weekly = BASE_WEEKLY_RATE
+    ordinary_hourly_rate = get_ordinary_hourly_rate(base_weekly, casual_loading_percent)
     penalty_rates = {
         k: round(ordinary_hourly_rate * v, 2)
         for k, v in PENALTY_MULTIPLIERS.items()
@@ -54,8 +67,24 @@ async def get_worker_classification(
     employment_type: str,
     classification_level: int,
     casual_loading_percent: float = 25,
+    db: Session | None = Depends(get_db_optional),
 ):
-    calculated_rate = get_ordinary_hourly_rate(BASE_WEEKLY_RATE, casual_loading_percent)
+    details = None
+    if db:
+        try:
+            details = get_classification_details(
+                db, award_code, employment_type, classification_level
+            )
+        except Exception:
+            pass
+    if details:
+        base_rate = details["base_rate"] or BASE_WEEKLY_RATE
+        calculated_rate = get_ordinary_hourly_rate(base_rate, casual_loading_percent)
+        classification = details["classification"]
+    else:
+        base_rate = BASE_WEEKLY_RATE
+        calculated_rate = get_ordinary_hourly_rate(BASE_WEEKLY_RATE, casual_loading_percent)
+        classification = f"Retail Employee Level {classification_level}"
     penalty_rates = []
     for key, multiplier in PENALTY_MULTIPLIERS.items():
         desc, type_, clause = PENALTY_DESCRIPTIONS.get(
@@ -73,14 +102,13 @@ async def get_worker_classification(
             )
         )
     award_name = "General Retail Industry Award 2020" if award_code == "MA000004" else award_code
-    classification = f"Retail Employee Level {classification_level}"
     return WorkerClassificationResponse(
         award_code=award_code,
         award_name=award_name,
         employment_type=employment_type,
         classification=classification,
         classification_level=classification_level,
-        base_rate=BASE_WEEKLY_RATE,
+        base_rate=base_rate,
         base_rate_type="Weekly",
         calculated_rate=calculated_rate,
         calculated_rate_type="Hourly",

@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
+from app.database import get_db_optional
 from app.models.schemas import (
     ShiftRequest,
     ShiftResponse,
@@ -20,6 +22,7 @@ from app.models.schemas import (
 )
 from app.services.award_rules import AWARD_CODE, RATES_VERSION, BASE_WEEKLY_RATE
 from app.services.calculator import calculate_shift, get_ordinary_hourly_rate
+from app.services.db_rates import get_base_weekly_rate
 
 router = APIRouter()
 
@@ -31,7 +34,14 @@ async def calculate_single_shift(
     employment_type: str = "CA",
     classification_level: int = 1,
     casual_loading_percent: float = 25,
+    db: Session | None = Depends(get_db_optional),
 ):
+    try:
+        base_weekly_rate = get_base_weekly_rate(
+            db, award_code, employment_type, classification_level
+        ) if db else BASE_WEEKLY_RATE
+    except Exception:
+        base_weekly_rate = BASE_WEEKLY_RATE
     result = calculate_shift(
         shift_date=request.shift_date,
         start_time=request.start_time,
@@ -39,7 +49,7 @@ async def calculate_single_shift(
         break_minutes=request.break_minutes,
         is_public_holiday=request.is_public_holiday,
         casual_loading_percent=casual_loading_percent,
-        base_weekly_rate=BASE_WEEKLY_RATE,
+        base_weekly_rate=base_weekly_rate,
     )
     return ShiftResponse(
         shift_date=result["shift_date"],
@@ -61,7 +71,19 @@ async def calculate_single_shift(
 
 
 @router.post("/api/v1/calculate/bulk", response_model=BulkShiftResponse)
-async def calculate_bulk_shifts(request: BulkShiftRequest):
+async def calculate_bulk_shifts(
+    request: BulkShiftRequest,
+    db: Session | None = Depends(get_db_optional),
+):
+    try:
+        base_weekly_rate = get_base_weekly_rate(
+            db,
+            award_code=request.award_code,
+            employment_type=request.employment_type,
+            classification_level=request.classification_level,
+        ) if db else BASE_WEEKLY_RATE
+    except Exception:
+        base_weekly_rate = BASE_WEEKLY_RATE
     all_warnings: list[str] = []
     shifts_out = []
     total_cost = 0.0
@@ -75,7 +97,7 @@ async def calculate_bulk_shifts(request: BulkShiftRequest):
             break_minutes=req.break_minutes,
             is_public_holiday=req.is_public_holiday,
             casual_loading_percent=request.casual_loading_percent,
-            base_weekly_rate=BASE_WEEKLY_RATE,
+            base_weekly_rate=base_weekly_rate,
         )
         all_warnings.extend(result["warnings"])
         total_cost += result["gross_pay"]
@@ -112,13 +134,25 @@ async def calculate_bulk_shifts(request: BulkShiftRequest):
 
 
 @router.post("/api/v1/calculate/roster", response_model=RosterResponse)
-async def calculate_roster(request: RosterRequest):
+async def calculate_roster(
+    request: RosterRequest,
+    db: Session | None = Depends(get_db_optional),
+):
     roster_warnings: list[str] = []
     workers_out = []
     roster_total_cost = 0.0
     roster_total_hours = 0.0
 
     for worker in request.workers:
+        try:
+            base_weekly_rate = get_base_weekly_rate(
+                db,
+                award_code=worker.award_code,
+                employment_type=worker.employment_type,
+                classification_level=worker.classification_level,
+            ) if db else BASE_WEEKLY_RATE
+        except Exception:
+            base_weekly_rate = BASE_WEEKLY_RATE
         worker_cost = 0.0
         worker_hours = 0.0
         worker_warnings: list[str] = []
@@ -132,7 +166,7 @@ async def calculate_roster(request: RosterRequest):
                 break_minutes=req.break_minutes,
                 is_public_holiday=req.is_public_holiday,
                 casual_loading_percent=worker.casual_loading_percent,
-                base_weekly_rate=BASE_WEEKLY_RATE,
+                base_weekly_rate=base_weekly_rate,
             )
             worker_warnings.extend(result["warnings"])
             worker_cost += result["gross_pay"]
@@ -161,8 +195,17 @@ async def calculate_roster(request: RosterRequest):
         roster_total_cost += worker_cost
         roster_total_hours += worker_hours
 
+        try:
+            _base = get_base_weekly_rate(
+                db,
+                award_code=worker.award_code,
+                employment_type=worker.employment_type,
+                classification_level=worker.classification_level,
+            ) if db else BASE_WEEKLY_RATE
+        except Exception:
+            _base = BASE_WEEKLY_RATE
         ordinary_hourly_rate = get_ordinary_hourly_rate(
-            BASE_WEEKLY_RATE, worker.casual_loading_percent
+            _base, worker.casual_loading_percent
         )
         workers_out.append(
             WorkerShiftResponse(
@@ -192,7 +235,10 @@ async def calculate_roster(request: RosterRequest):
 
 
 @router.post("/api/v1/calculate/shift-roster", response_model=ShiftRosterResponse)
-async def calculate_shift_roster(request: ShiftRosterRequest):
+async def calculate_shift_roster(
+    request: ShiftRosterRequest,
+    db: Session | None = Depends(get_db_optional),
+):
     workers_by_id = {w.worker_id: w for w in request.workers}
     all_warnings: list[str] = []
     shifts_out: list[ShiftRosterShiftResult] = []
@@ -210,6 +256,15 @@ async def calculate_shift_roster(request: ShiftRosterRequest):
             worker = workers_by_id.get(wid)
             if not worker:
                 continue
+            try:
+                base_weekly_rate = get_base_weekly_rate(
+                    db,
+                    award_code=worker.award_code,
+                    employment_type=worker.employment_type,
+                    classification_level=worker.classification_level,
+                ) if db else BASE_WEEKLY_RATE
+            except Exception:
+                base_weekly_rate = BASE_WEEKLY_RATE
             result = calculate_shift(
                 shift_date=shift.shift_date,
                 start_time=shift.start_time,
@@ -217,10 +272,10 @@ async def calculate_shift_roster(request: ShiftRosterRequest):
                 break_minutes=shift.break_minutes,
                 is_public_holiday=shift.is_public_holiday,
                 casual_loading_percent=worker.casual_loading_percent,
-                base_weekly_rate=BASE_WEEKLY_RATE,
+                base_weekly_rate=base_weekly_rate,
             )
             ordinary_hourly_rate = get_ordinary_hourly_rate(
-                BASE_WEEKLY_RATE, worker.casual_loading_percent
+                base_weekly_rate, worker.casual_loading_percent
             )
             wage_allowance = shift.wage_allowance_costs_by_worker.get(wid, 0.0)
             expense_allowance = shift.expense_allowance_costs_by_worker.get(wid, 0.0)

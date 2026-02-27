@@ -17,6 +17,7 @@ build/
 
 # Environment variables — never commit these
 .env
+backend/.env
 
 # VS Code
 .vscode/settings.json
