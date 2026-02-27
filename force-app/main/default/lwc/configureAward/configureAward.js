@@ -48,7 +48,7 @@ export default class ConfigureAward extends LightningElement {
     @track selectedClassification = '';
     @track selectedClassificationLevel = null;
     @track selectedClassificationValue = '';
-    @track classificationExpanded = false;
+    @track classificationExpanded = true;
 
     // Rate data from API (readonly reference values)
     @track apiBaseRate = null;          // weekly base rate, e.g. 1008.90

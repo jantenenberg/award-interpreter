@@ -168,6 +168,10 @@
     gap: 2px;
 }
 
+.ca-rate-input {
+    margin: 0;
+}
+
 .ca-rate-input-compact {
     width: 110px;
 }
@@ -177,6 +181,24 @@
     font-size: 0.6875rem;
     font-weight: 600;
     white-space: nowrap;
+}
+
+/* ── Casual badge ──────────────────────────────────────────────────────────── */
+
+.ca-casual-badge-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+}
+
+.ca-casual-badge {
+    background: #fef3cd;
+    border: 1px solid #f0c040;
+    border-radius: 4px;
+    color: #7a5c00;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 3px 10px;
 }
 
 /* ── Expandable classification details panel ───────────────────────────────── */
@@ -192,7 +214,7 @@
 .ca-classification-grid {
     border-top: 1px solid #efefef;
     display: grid;
-    grid-template-columns: 2fr 1.5fr 0.4fr 1fr;
+    grid-template-columns: 2fr 1.5fr 0.4fr 1fr 1.2fr;
     column-gap: 18px;
     padding: 10px 0 8px;
     align-items: start;
