@@ -12,8 +12,10 @@ const EMPLOYMENT_TYPE_OPTIONS = [
     { label: 'Casual', value: 'CA' },
 ];
 
+const STANDARD_HOURS_PER_WEEK = 38;
+
 export default class ConfigureAward extends LightningElement {
-    @api recordId; // Award_Configuration__c record Id
+    @api recordId;
 
     @track isLoading = true;
     @track errorMessage = '';
@@ -22,19 +24,28 @@ export default class ConfigureAward extends LightningElement {
     @track resourceName = '';
     @track isAlreadyConfigured = false;
 
-    // Form state
+    // Award / employment type
     @track awardOptions = [];
     @track selectedAwardCode = '';
     @track selectedAwardName = '';
     @track selectedEmploymentType = '';
+
+    // Classification
     @track classificationOptions = [];
     @track selectedClassification = '';
     @track selectedClassificationLevel = null;
     @track selectedClassificationValue = '';
+
+    // Rate data from API (readonly reference values)
+    @track apiBaseRate = null;          // weekly base rate, e.g. 1008.90
+    @track apiBaseRateType = '';        // e.g. "Weekly"
+    @track apiCalculatedRate = null;    // base hourly (no casual loading), e.g. 26.55
+    @track apiCalculatedRateType = '';  // e.g. "Hourly"
+
+    // Editable / save fields
     @track casualLoadingPercent = 25;
     @track effectiveDate = new Date().toISOString().slice(0, 10);
-    @track ordinaryHourlyRate = null;
-    @track rateWithLoading = null;
+    @track editableRate = null;         // user-editable; defaults to rate-with-loading
 
     get employmentTypeOptions() {
         return EMPLOYMENT_TYPE_OPTIONS;
@@ -50,8 +61,20 @@ export default class ConfigureAward extends LightningElement {
                this.classificationOptions.length > 0;
     }
 
-    get showRatePreview() {
-        return this.ordinaryHourlyRate !== null;
+    get showClassificationSummary() {
+        return !!this.selectedClassification;
+    }
+
+    // Formatted base rate label, e.g. "$1008.90/week"
+    get baseRateLabel() {
+        if (this.apiBaseRate == null) return '—';
+        const unit = (this.apiBaseRateType || 'week').toLowerCase();
+        return `$${parseFloat(this.apiBaseRate).toFixed(2)}/${unit}`;
+    }
+
+    // Calculated rate type label, e.g. "Hourly"
+    get calculatedRateTypeLabel() {
+        return this.apiCalculatedRateType || 'Hourly';
     }
 
     get isSaveDisabled() {
@@ -92,8 +115,8 @@ export default class ConfigureAward extends LightningElement {
                 this.selectedClassificationLevel = config.Classification_Level__c;
                 this.casualLoadingPercent = config.Casual_Loading_Percent__c ?? 25;
                 this.effectiveDate = config.Effective_Date__c || new Date().toISOString().slice(0, 10);
-                this.ordinaryHourlyRate = config.Ordinary_Hourly_Rate__c
-                    ? config.Ordinary_Hourly_Rate__c.toFixed(2)
+                this.editableRate = config.Ordinary_Hourly_Rate__c
+                    ? config.Ordinary_Hourly_Rate__c.toFixed(4)
                     : null;
 
                 if (this.selectedAwardCode && this.selectedEmploymentType) {
@@ -126,8 +149,11 @@ export default class ConfigureAward extends LightningElement {
                 this.selectedClassification = '';
                 this.selectedClassificationLevel = null;
                 this.selectedClassificationValue = '';
-                this.ordinaryHourlyRate = null;
-                this.rateWithLoading = null;
+                this.apiBaseRate = null;
+                this.apiBaseRateType = '';
+                this.apiCalculatedRate = null;
+                this.apiCalculatedRateType = '';
+                this.editableRate = null;
             }
 
             const results = await getClassifications({
@@ -141,30 +167,55 @@ export default class ConfigureAward extends LightningElement {
                     classification: c.classification,
                     level: c.classificationLevel,
                     baseRate: c.baseRate,
+                    baseRateType: c.baseRateType,
+                    calculatedRate: c.calculatedRate,
+                    calculatedRateType: c.calculatedRateType,
                 }),
             }));
 
-            // Re-select existing classification when editing
+            // Re-select the saved classification when editing
             if (!resetSelection && this.selectedClassification) {
                 const match = this.classificationOptions.find(opt => {
-                    const parsed = JSON.parse(opt.value);
-                    return parsed.classification === this.selectedClassification &&
-                           parsed.level === this.selectedClassificationLevel;
+                    const p = JSON.parse(opt.value);
+                    return p.classification === this.selectedClassification &&
+                           p.level === this.selectedClassificationLevel;
                 });
                 if (match) {
                     this.selectedClassificationValue = match.value;
-                    const parsed = JSON.parse(match.value);
-                    if (parsed.baseRate) {
-                        const base = parseFloat(parsed.baseRate);
-                        this.ordinaryHourlyRate = base.toFixed(2);
-                        this.updateRateWithLoading(base);
-                    }
+                    this._applyClassificationData(JSON.parse(match.value), false);
                 }
             }
         } catch (e) {
             this.errorMessage = 'Failed to load classifications: ' + (e.body?.message || e.message);
         } finally {
             this.isLoading = false;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Populate rate state from a parsed classification value object. */
+    _applyClassificationData(parsed, resetEditableRate = true) {
+        this.apiBaseRate = parsed.baseRate ? parseFloat(parsed.baseRate) : null;
+        this.apiBaseRateType = parsed.baseRateType || 'Weekly';
+        this.apiCalculatedRateType = parsed.calculatedRateType || 'Hourly';
+
+        // Derive hourly rate: use calculatedRate from API if available,
+        // otherwise fall back to base_rate / standard hours.
+        let hourlyBase = null;
+        if (parsed.calculatedRate) {
+            hourlyBase = parseFloat(parsed.calculatedRate);
+        } else if (parsed.baseRate) {
+            hourlyBase = parseFloat(parsed.baseRate) / STANDARD_HOURS_PER_WEEK;
+        }
+        this.apiCalculatedRate = hourlyBase;
+
+        if (resetEditableRate && hourlyBase !== null) {
+            // Apply casual loading to the editable default rate
+            const withLoading = this.isCasual
+                ? hourlyBase * (1 + this.casualLoadingPercent / 100)
+                : hourlyBase;
+            this.editableRate = withLoading.toFixed(4);
         }
     }
 
@@ -188,17 +239,17 @@ export default class ConfigureAward extends LightningElement {
         const parsed = JSON.parse(event.detail.value);
         this.selectedClassification = parsed.classification;
         this.selectedClassificationLevel = parsed.level;
-        if (parsed.baseRate) {
-            const base = parseFloat(parsed.baseRate);
-            this.ordinaryHourlyRate = base.toFixed(2);
-            this.updateRateWithLoading(base);
-        }
+        this._applyClassificationData(parsed, true);
     }
 
     handleCasualLoadingChange(event) {
         this.casualLoadingPercent = parseFloat(event.detail.value) || 0;
-        if (this.ordinaryHourlyRate) {
-            this.updateRateWithLoading(parseFloat(this.ordinaryHourlyRate));
+        // Recalculate editable rate when loading % changes
+        if (this.apiCalculatedRate !== null) {
+            const withLoading = this.isCasual
+                ? this.apiCalculatedRate * (1 + this.casualLoadingPercent / 100)
+                : this.apiCalculatedRate;
+            this.editableRate = withLoading.toFixed(4);
         }
     }
 
@@ -206,9 +257,8 @@ export default class ConfigureAward extends LightningElement {
         this.effectiveDate = event.detail.value;
     }
 
-    updateRateWithLoading(baseRate) {
-        const withLoading = baseRate * (1 + this.casualLoadingPercent / 100);
-        this.rateWithLoading = withLoading.toFixed(2);
+    handleRateChange(event) {
+        this.editableRate = event.detail.value;
     }
 
     async handleSave() {
@@ -224,11 +274,7 @@ export default class ConfigureAward extends LightningElement {
                 classificationLevel: this.selectedClassificationLevel,
                 casualLoadingPercent: this.isCasual ? this.casualLoadingPercent : null,
                 effectiveDate: this.effectiveDate,
-                ordinaryHourlyRate: this.isCasual && this.rateWithLoading
-                    ? parseFloat(this.rateWithLoading)
-                    : this.ordinaryHourlyRate
-                        ? parseFloat(this.ordinaryHourlyRate)
-                        : null,
+                ordinaryHourlyRate: this.editableRate ? parseFloat(this.editableRate) : null,
             });
 
             this.dispatchEvent(new ShowToastEvent({
@@ -236,7 +282,6 @@ export default class ConfigureAward extends LightningElement {
                 message: 'Award configuration saved.',
                 variant: 'success',
             }));
-
             this.dispatchEvent(new CloseActionScreenEvent());
         } catch (e) {
             this.errorMessage = 'Save failed: ' + (e.body?.message || e.message);

@@ -64,7 +64,75 @@
                     </div>
                 </template>
 
-                <!-- Casual loading — casual only -->
+                <!-- Selected classification summary panel -->
+                <template if:true={showClassificationSummary}>
+                    <div class="classification-panel slds-m-top_small slds-m-bottom_medium">
+
+                        <div class="panel-header slds-grid slds-grid_align-spread slds-m-bottom_x-small">
+                            <span class="slds-text-title_caps panel-title">Selected classification</span>
+                            <template if:true={isCasual}>
+                                <span class="casual-badge">Casual (includes casual loading in calculated rate)</span>
+                            </template>
+                        </div>
+
+                        <!-- Row 1: main classification data -->
+                        <div class="slds-grid slds-gutters slds-wrap panel-row">
+                            <div class="slds-col slds-size_2-of-6">
+                                <p class="panel-label">Award</p>
+                                <p class="panel-value">{selectedAwardCode} – {selectedAwardName}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-6">
+                                <p class="panel-label">Classification</p>
+                                <p class="panel-value">{selectedClassification}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-6">
+                                <p class="panel-label">Level</p>
+                                <p class="panel-value">{selectedClassificationLevel}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-6">
+                                <p class="panel-label">Base rate</p>
+                                <p class="panel-value">{baseRateLabel}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-6">
+                                <p class="panel-label">Calculated rate</p>
+                                <lightning-input
+                                    type="number"
+                                    value={editableRate}
+                                    min="0"
+                                    step="0.0001"
+                                    formatter="currency"
+                                    onchange={handleRateChange}
+                                    variant="label-hidden"
+                                    class="rate-input">
+                                </lightning-input>
+                                <p class="panel-sublabel">/{calculatedRateTypeLabel} — editable</p>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: meta -->
+                        <div class="slds-grid slds-gutters slds-wrap panel-row panel-row-meta">
+                            <div class="slds-col slds-size_1-of-4">
+                                <p class="panel-label">Employment type</p>
+                                <p class="panel-value">{selectedEmploymentType}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4">
+                                <p class="panel-label">Base rate type</p>
+                                <p class="panel-value">{apiBaseRateType}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4">
+                                <p class="panel-label">Calculated rate type</p>
+                                <p class="panel-value">{calculatedRateTypeLabel}</p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4">
+                                <p class="panel-label">Clauses</p>
+                                <p class="panel-value panel-value-muted">—</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+
+                <!-- Casual loading % — casual only -->
                 <template if:true={isCasual}>
                     <div class="slds-form-element slds-m-bottom_small">
                         <lightning-input
@@ -90,27 +158,6 @@
                         required>
                     </lightning-input>
                 </div>
-
-                <!-- Rate preview -->
-                <template if:true={showRatePreview}>
-                    <div class="slds-box slds-m-top_small slds-m-bottom_medium rate-preview">
-                        <p class="slds-text-title_caps slds-m-bottom_x-small">Rate Preview</p>
-                        <div class="slds-grid slds-gutters">
-                            <div class="slds-col">
-                                <p class="slds-text-body_small slds-text-color_weak">Base Hourly Rate</p>
-                                <p class="slds-text-heading_small">${ordinaryHourlyRate}/hr</p>
-                            </div>
-                            <template if:true={isCasual}>
-                                <div class="slds-col">
-                                    <p class="slds-text-body_small slds-text-color_weak">
-                                        With {casualLoadingPercent}% Casual Loading
-                                    </p>
-                                    <p class="slds-text-heading_small rate-highlight">${rateWithLoading}/hr</p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </template>
 
             </div>
         </template>

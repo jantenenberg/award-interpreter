@@ -74,8 +74,11 @@ public with sharing class AwardConfigurationController {
             Map<String, Object> cl = (Map<String, Object>) c;
             results.add(new ClassificationOption(
                 (String) cl.get('classification'),
-                (Integer) cl.get('classification_level'),
-                cl.get('base_rate') != null ? String.valueOf(cl.get('base_rate')) : null
+                cl.get('classification_level') != null ? Integer.valueOf(String.valueOf(cl.get('classification_level'))) : null,
+                cl.get('base_rate') != null ? String.valueOf(cl.get('base_rate')) : null,
+                (String) cl.get('base_rate_type'),
+                cl.get('calculated_rate') != null ? String.valueOf(cl.get('calculated_rate')) : null,
+                (String) cl.get('calculated_rate_type')
             ));
         }
         return results;
@@ -160,10 +163,16 @@ public with sharing class AwardConfigurationController {
         @AuraEnabled public String classification;
         @AuraEnabled public Integer classificationLevel;
         @AuraEnabled public String baseRate;
-        public ClassificationOption(String c, Integer l, String r) {
+        @AuraEnabled public String baseRateType;
+        @AuraEnabled public String calculatedRate;
+        @AuraEnabled public String calculatedRateType;
+        public ClassificationOption(String c, Integer l, String br, String brt, String cr, String crt) {
             this.classification = c;
             this.classificationLevel = l;
-            this.baseRate = r;
+            this.baseRate = br;
+            this.baseRateType = brt;
+            this.calculatedRate = cr;
+            this.calculatedRateType = crt;
         }
     }
 }
