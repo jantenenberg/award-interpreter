@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Column, String, Float, Integer, Date, DateTime
 from app.database import Base
 
@@ -74,3 +76,17 @@ class PenaltyRate(Base):
     penalty_calculated_value = Column(Float, nullable=True)
     operative_from = Column(Date, nullable=True)
     operative_to = Column(Date, nullable=True)
+
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    org_id = Column(String, index=True, nullable=False)
+    org_name = Column(String, nullable=False)
+    key_hash = Column(String, unique=True, index=True, nullable=False)
+    key_prefix = Column(String, nullable=False)
+    is_active = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime, nullable=True)
+    total_calls = Column(Integer, default=0)

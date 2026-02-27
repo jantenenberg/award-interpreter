@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db_optional
+from app.dependencies import require_api_key
 from app.models.schemas import (
     ShiftRequest,
     ShiftResponse,
@@ -111,6 +112,7 @@ async def calculate_single_shift(
     classification_level: int = 1,
     casual_loading_percent: float = 25,
     db: Optional[Session] = Depends(get_db_optional),
+    _=Depends(require_api_key),
 ):
     result = _fetch_rates_and_calculate(
         db, award_code, employment_type, classification_level,
@@ -132,6 +134,7 @@ async def calculate_single_shift(
 async def calculate_bulk_shifts(
     request: BulkShiftRequest,
     db: Optional[Session] = Depends(get_db_optional),
+    _=Depends(require_api_key),
 ):
     all_warnings: list[str] = []
     shifts_out = []
@@ -174,6 +177,7 @@ async def calculate_bulk_shifts(
 async def calculate_roster(
     request: RosterRequest,
     db: Optional[Session] = Depends(get_db_optional),
+    _=Depends(require_api_key),
 ):
     roster_warnings: list[str] = []
     workers_out = []
@@ -250,6 +254,7 @@ async def calculate_roster(
 async def calculate_shift_roster(
     request: ShiftRosterRequest,
     db: Optional[Session] = Depends(get_db_optional),
+    _=Depends(require_api_key),
 ):
     workers_by_id = {w.worker_id: w for w in request.workers}
     all_warnings: list[str] = []
