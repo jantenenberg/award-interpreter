@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import calculate, rates, health
+from app.routers import calculate, rates, health, reference_data
 
 app = FastAPI(
     title="Award Interpreter API",
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(rates.router)
 app.include_router(calculate.router)
+app.include_router(reference_data.router)
 
 # Serve existing frontend static files from project root (parent of backend/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

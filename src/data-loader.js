@@ -1,6 +1,6 @@
 // data-loader.js
-// Responsible for fetching and parsing the 5 Fair Work MAP CSV files
-// and exposing indexed data + simple subscription hooks to the UI.
+// Loads Fair Work MAP data from the backend API (database tables)
+// and exposes indexed data + simple subscription hooks to the UI.
 
 const DATA_STATE = {
   loaded: false,
@@ -13,34 +13,6 @@ const DATA_STATE = {
   allowancesByAward: new Map(), // { wage: [...], expense: [...] }
   subscribers: new Set(),
 };
-
-// Load CSV paths from localStorage if configured, otherwise use defaults
-function getCsvPaths() {
-  const saved = localStorage.getItem('csvPaths');
-  if (saved) {
-    try {
-      const paths = JSON.parse(saved);
-      return {
-        awards: paths.awards || "./data/source/map-award-export-2025.csv",
-        classifications: paths.classifications || "./data/source/map-classification-export-2025.csv",
-        penalties: paths.penalties || "./data/source/map-penalty-export-2025.csv",
-        wageAllowances: paths.wageAllowances || "./data/source/map-wage-allowance-export-2025.csv",
-        expenseAllowances: paths.expenseAllowances || "./data/source/map-expense-allowance-export-2025.csv",
-      };
-    } catch (e) {
-      console.warn('Error loading saved CSV paths:', e);
-    }
-  }
-  return {
-    awards: "./data/source/map-award-export-2025.csv",
-    classifications: "./data/source/map-classification-export-2025.csv",
-    penalties: "./data/source/map-penalty-export-2025.csv",
-    wageAllowances: "./data/source/map-wage-allowance-export-2025.csv",
-    expenseAllowances: "./data/source/map-expense-allowance-export-2025.csv",
-  };
-}
-
-const CSV_PATHS = getCsvPaths();
 
 // Date-filter helper: keep rows whose operative range includes "today"
 export function isRowOperative(operativeFrom, operativeTo, today) {
@@ -76,88 +48,16 @@ export function getDataIndexes() {
   return DATA_STATE;
 }
 
-// Minimal CSV parser that supports:
-// - quoted fields
-// - commas within quotes
-// - newlines within quoted fields
-// Returns array of objects using header row as keys.
-export function parseCsvText(text) {
-  const rows = [];
-  let row = [];
-  let field = "";
-  let inQuotes = false;
-
-  const pushField = () => {
-    row.push(field);
-    field = "";
-  };
-  const pushRow = () => {
-    rows.push(row);
-    row = [];
-  };
-
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQuotes) {
-      if (c === '"') {
-        const next = text[i + 1];
-        if (next === '"') {
-          field += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        field += c;
-      }
-    } else {
-      if (c === '"') {
-        inQuotes = true;
-      } else if (c === ",") {
-        pushField();
-      } else if (c === "\r") {
-        // ignore, handle on \n
-      } else if (c === "\n") {
-        pushField();
-        pushRow();
-      } else {
-        field += c;
-      }
-    }
-  }
-  // last field/row
-  pushField();
-  if (row.length > 1 || (row.length === 1 && row[0] !== "")) {
-    pushRow();
-  }
-
-  if (!rows.length) return [];
-  const headers = rows[0].map((h) => h.trim());
-  const data = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (r.every((v) => v === "")) continue;
-    const obj = {};
-    headers.forEach((h, idx) => {
-      obj[h] = r[idx] != null ? r[idx] : "";
-    });
-    data.push(obj);
-  }
-  return data;
-}
-
-async function loadCsv(url) {
-  const res = await fetch(url);
+async function fetchApiTable(path) {
+  const res = await fetch(path);
   if (!res.ok) {
-    throw new Error(`Failed to fetch ${url} (${res.status})`);
+    throw new Error(`API request failed: ${path} (${res.status})`);
   }
-  const text = await res.text();
-  return parseCsvText(text);
+  const data = await res.json();
+  return data.rows || [];
 }
 
 async function loadAllCsv() {
-  const today = new Date();
-
   const [
     awardsRows,
     classificationRows,
@@ -165,18 +65,17 @@ async function loadAllCsv() {
     wageAllowanceRows,
     expenseAllowanceRows,
   ] = await Promise.all([
-    loadCsv(CSV_PATHS.awards),
-    loadCsv(CSV_PATHS.classifications),
-    loadCsv(CSV_PATHS.penalties),
-    loadCsv(CSV_PATHS.wageAllowances),
-    loadCsv(CSV_PATHS.expenseAllowances),
+    fetchApiTable("/api/v1/reference-data/awards?limit=500"),
+    fetchApiTable("/api/v1/reference-data/classifications?limit=20000"),
+    fetchApiTable("/api/v1/reference-data/penalties?limit=60000"),
+    fetchApiTable("/api/v1/reference-data/wage-allowances?limit=3000"),
+    fetchApiTable("/api/v1/reference-data/expense-allowances?limit=2000"),
   ]);
 
   // Awards
   for (const row of awardsRows) {
     const { awardCode, awardID, awardFixedID, name, versionNumber, awardOperativeFrom, awardOperativeTo } = row;
     if (!awardCode) continue;
-    if (!isRowOperative(awardOperativeFrom, awardOperativeTo, today)) continue;
     DATA_STATE.awardsByCode.set(awardCode, {
       awardCode,
       awardID,
@@ -214,8 +113,6 @@ async function loadAllCsv() {
     } = row;
 
     if (!awardCode) continue;
-    if (String(isHeading).trim() === "1") continue;
-    if (!isRowOperative(operativeFrom, operativeTo, today)) continue;
 
     // Check for override (configOverrides loaded before loop)
     const overrideKey = `${awardCode}|${classification || ''}|${employeeRateTypeCode || ''}`;
@@ -289,8 +186,6 @@ async function loadAllCsv() {
     } = row;
 
     if (!awardCode) continue;
-    if (String(isHeading).trim() === "1") continue;
-    if (!isRowOperative(operativeFrom, operativeTo, today)) continue;
 
     const penaltyObj = {
       awardCode,
@@ -338,7 +233,6 @@ async function loadAllCsv() {
       clauses,
     } = row;
     if (!awardCode) continue;
-    if (String(isHeading).trim() === "1") continue;
 
     const allowanceObj = {
       awardCode,
@@ -371,7 +265,6 @@ async function loadAllCsv() {
       clauses,
     } = row;
     if (!awardCode) continue;
-    if (String(isHeading).trim() === "1") continue;
 
     const allowanceObj = {
       awardCode,
@@ -427,17 +320,17 @@ async function initDataLoader() {
 
     if (loadingText) {
       if (DATA_STATE.error) {
-        loadingText.textContent = "Failed to load Fair Work CSV data.";
+        loadingText.textContent = "Failed to connect to Fair Work data tables.";
         loadingText.className = "status-error";
       } else {
-        loadingText.textContent = "Fair Work CSV data loaded.";
+        loadingText.textContent = "Connected to Fair Work data tables.";
         loadingText.className = "status-success";
       }
     }
     if (loadingDetail) {
       if (DATA_STATE.error) {
         loadingDetail.textContent =
-          "Check that all 5 CSV files exist under ./data/source/ and are accessible.";
+          "Could not reach the data tables API. Check that the backend service is running.";
       } else {
         const awardsCount = DATA_STATE.awardsByCode.size;
         const classificationsCount = Array.from(
@@ -459,7 +352,7 @@ async function initDataLoader() {
           `Penalties: ${penaltiesCount}`,
           `Wage allowances: ${wageAllowancesCount}`,
           `Expense allowances: ${expenseAllowancesCount}`,
-        ].join(" • ");
+        ].join(" • ") + " — loaded from database";
       }
     }
 

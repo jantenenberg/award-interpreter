@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reference Data – Fair Work Award Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .ref-filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+        padding: 16px 20px;
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .ref-filter-bar label {
+        font-weight: 500;
+        font-size: 14px;
+        color: #4a5568;
+        white-space: nowrap;
+      }
+      .ref-filter-bar select {
+        flex: 1;
+        min-width: 260px;
+        max-width: 480px;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        background: #fff;
+        color: var(--text);
+      }
+      .ref-summary-chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .ref-chip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 18px;
+        min-width: 120px;
+      }
+      .ref-chip-count {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--brand-blue);
+        line-height: 1.2;
+      }
+      .ref-chip-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-top: 2px;
+      }
+      .ref-table-wrap {
+        overflow-x: auto;
+        margin-top: 16px;
+      }
+      .ref-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .ref-table th {
+        text-align: left;
+        padding: 8px 10px;
+        background: var(--surface-muted);
+        border-bottom: 2px solid var(--border);
+        font-weight: 600;
+        color: #4a5568;
+        white-space: nowrap;
+      }
+      .ref-table td {
+        padding: 7px 10px;
+        border-bottom: 1px solid #f1f5f9;
+        color: var(--text);
+        vertical-align: top;
+      }
+      .ref-table tr:last-child td {
+        border-bottom: none;
+      }
+      .ref-table tr:hover td {
+        background: #f8fafc;
+      }
+      .ref-empty {
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .ref-pagination {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .ref-pagination button {
+        padding: 5px 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .ref-pagination button:hover:not(:disabled) {
+        background: var(--surface-muted);
+      }
+      .ref-pagination button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .ref-loading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .ref-section-meta {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .db-connected-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #16a34a;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 20px;
+        padding: 3px 10px;
+      }
+      .db-connected-badge::before {
+        content: "●";
+        font-size: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container" role="application" aria-label="Reference Data">
+      <header class="app-header">
+        <div class="app-header-inner">
+          <div class="app-brand">
+            <img src="./assets/maica-logo.png" alt="Maica logo" class="app-logo" />
+            <div class="app-brand-text">
+              <h1>Maica Roster Costing Calculator</h1>
+              <p>Read-only view of all five Fair Work reference data tables currently loaded into the engine</p>
+            </div>
+          </div>
+          <nav class="app-nav">
+            <a href="./index.html">Calculator</a>
+            <a href="./config.html">Configuration</a>
+            <a href="./documentation.html">Documentation</a>
+            <a href="./reference-data.html" style="font-weight:700;text-decoration:underline;">Reference Data</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="app-content">
+
+        <!-- Connection status + summary counts -->
+        <section class="section" aria-live="polite">
+          <div class="section-header">
+            <div class="section-title">
+              <span class="section-title-dot"></span>
+              <span>Data tables</span>
+            </div>
+            <span id="db-badge"></span>
+          </div>
+          <div id="summary-loading" class="ref-loading">
+            <div class="spinner" aria-hidden="true"></div>
+            <span>Connecting to database…</span>
+          </div>
+          <div id="summary-chips" class="ref-summary-chips" hidden></div>
+          <p id="summary-error" class="status-error" hidden></p>
+        </section>
+
+        <!-- Award filter -->
+        <div class="ref-filter-bar">
+          <label for="award-select">Filter by award:</label>
+          <select id="award-select" disabled>
+            <option value="">— loading awards —</option>
+          </select>
+          <span id="filter-hint" style="font-size:13px;color:var(--muted);">Select an award to browse all tables for that award</span>
+        </div>
+
+        <!-- Awards table -->
+        <section class="section" aria-labelledby="section-awards-heading">
+          <details class="section-details" id="section-awards" open>
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-awards-heading">Awards</span>
+                  <span id="awards-meta" class="ref-section-meta"></span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+              <div id="awards-content">
+                <div class="ref-loading"><div class="spinner" aria-hidden="true"></div><span>Loading…</span></div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Classifications table -->
+        <section class="section" aria-labelledby="section-cls-heading">
+          <details class="section-details" id="section-classifications">
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-cls-heading">Classifications</span>
+                  <span id="cls-meta" class="ref-section-meta"></span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+              <div id="cls-content">
+                <div class="ref-empty">Select an award above to view classifications.</div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Penalty Rates table -->
+        <section class="section" aria-labelledby="section-penalties-heading">
+          <details class="section-details" id="section-penalties">
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-penalties-heading">Penalty Rates</span>
+                  <span id="penalties-meta" class="ref-section-meta"></span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+              <div id="penalties-content">
+                <div class="ref-empty">Select an award above to view penalty rates.</div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Wage Allowances table -->
+        <section class="section" aria-labelledby="section-wage-heading">
+          <details class="section-details" id="section-wage">
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-wage-heading">Wage Allowances</span>
+                  <span id="wage-meta" class="ref-section-meta"></span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+              <div id="wage-content">
+                <div class="ref-empty">Select an award above to view wage allowances.</div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Expense Allowances table -->
+        <section class="section" aria-labelledby="section-expense-heading">
+          <details class="section-details" id="section-expense">
+            <summary class="section-summary">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-title-dot"></span>
+                  <span id="section-expense-heading">Expense Allowances</span>
+                  <span id="expense-meta" class="ref-section-meta"></span>
+                </div>
+              </div>
+            </summary>
+            <div class="section-body">
+              <div id="expense-content">
+                <div class="ref-empty">Select an award above to view expense allowances.</div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+      </main>
+    </div>
+
+    <script type="module">
+      const PAGE_SIZE = 200;
+
+      // ── helpers ──────────────────────────────────────────────────────────────
+
+      function fmt(v) {
+        if (v === null || v === undefined || v === "") return "—";
+        return String(v);
+      }
+
+      function fmtMoney(v) {
+        if (v === null || v === undefined) return "—";
+        const n = parseFloat(v);
+        if (isNaN(n)) return "—";
+        return "$" + n.toFixed(4);
+      }
+
+      function fmtRate(v) {
+        if (v === null || v === undefined) return "—";
+        const n = parseFloat(v);
+        if (isNaN(n)) return "—";
+        return n % 1 === 0 ? n.toFixed(0) + "%" : n.toFixed(4) + "%";
+      }
+
+      function buildTable(columns, rows) {
+        if (!rows.length) return `<div class="ref-empty">No records found.</div>`;
+        const head = columns.map(c => `<th>${c.label}</th>`).join("");
+        const body = rows.map(row => {
+          const cells = columns.map(c => `<td>${c.render ? c.render(row[c.key], row) : fmt(row[c.key])}</td>`).join("");
+          return `<tr>${cells}</tr>`;
+        }).join("");
+        return `<div class="ref-table-wrap"><table class="ref-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+      }
+
+      function paginationControls(total, offset, limit, onPage) {
+        const totalPages = Math.ceil(total / limit);
+        const currentPage = Math.floor(offset / limit) + 1;
+        const wrap = document.createElement("div");
+        wrap.className = "ref-pagination";
+        wrap.innerHTML = `
+          <button id="pg-prev" ${currentPage <= 1 ? "disabled" : ""}>&lsaquo; Prev</button>
+          <span>Page ${currentPage} of ${totalPages} &nbsp;(${total.toLocaleString()} rows)</span>
+          <button id="pg-next" ${currentPage >= totalPages ? "disabled" : ""}>Next &rsaquo;</button>
+        `;
+        wrap.querySelector("#pg-prev").addEventListener("click", () => onPage(offset - limit));
+        wrap.querySelector("#pg-next").addEventListener("click", () => onPage(offset + limit));
+        return wrap;
+      }
+
+      // ── API calls ─────────────────────────────────────────────────────────────
+
+      async function apiFetch(path) {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(`${path} → ${res.status}`);
+        return res.json();
+      }
+
+      // ── render helpers ───────────────────────────────────────────────────────
+
+      function renderSection(contentId, metaId, columns, data) {
+        const el = document.getElementById(contentId);
+        const meta = document.getElementById(metaId);
+        if (!el) return;
+        el.innerHTML = buildTable(columns, data.rows);
+        if (meta) meta.textContent = ` — ${data.total.toLocaleString()} rows`;
+        if (data.total > PAGE_SIZE) {
+          el.appendChild(paginationControls(data.total, data.offset, data.limit,
+            (newOffset) => loadSection(contentId, metaId, columns, data._url, newOffset)));
+        }
+      }
+
+      async function loadSection(contentId, metaId, columns, baseUrl, offset = 0) {
+        const el = document.getElementById(contentId);
+        if (!el) return;
+        el.innerHTML = `<div class="ref-loading"><div class="spinner"></div><span>Loading…</span></div>`;
+        try {
+          const sep = baseUrl.includes("?") ? "&" : "?";
+          const data = await apiFetch(`${baseUrl}${sep}limit=${PAGE_SIZE}&offset=${offset}`);
+          data._url = baseUrl;
+          renderSection(contentId, metaId, columns, data);
+        } catch (e) {
+          el.innerHTML = `<div class="ref-empty" style="color:#e53e3e">Failed to load: ${e.message}</div>`;
+        }
+      }
+
+      // ── column definitions ───────────────────────────────────────────────────
+
+      const AWARDS_COLS = [
+        { key: "awardCode", label: "Award Code" },
+        { key: "name", label: "Name" },
+        { key: "versionNumber", label: "Version" },
+        { key: "awardOperativeFrom", label: "Operative From" },
+        { key: "awardOperativeTo", label: "Operative To" },
+      ];
+
+      const CLASSIFICATIONS_COLS = [
+        { key: "employeeRateTypeCode", label: "Rate Type" },
+        { key: "classification", label: "Classification" },
+        { key: "classificationLevel", label: "Level" },
+        { key: "baseRate", label: "Base Rate", render: fmtMoney },
+        { key: "baseRateType", label: "Base Rate Type" },
+        { key: "calculatedRate", label: "Calculated Rate", render: fmtMoney },
+        { key: "calculatedRateType", label: "Calculated Rate Type" },
+        { key: "operativeFrom", label: "Operative From" },
+      ];
+
+      const PENALTIES_COLS = [
+        { key: "employeeRateTypeCode", label: "Rate Type" },
+        { key: "classification", label: "Classification" },
+        { key: "classificationLevel", label: "Level" },
+        { key: "penaltyDescription", label: "Description" },
+        { key: "rate", label: "Rate %", render: fmtRate },
+        { key: "penaltyRateUnit", label: "Unit" },
+        { key: "penaltyCalculatedValue", label: "Calculated Value", render: fmtMoney },
+        { key: "operativeFrom", label: "Operative From" },
+      ];
+
+      const WAGE_COLS = [
+        { key: "allowance", label: "Allowance" },
+        { key: "type", label: "Type" },
+        { key: "rate", label: "Rate %", render: fmtRate },
+        { key: "rateUnit", label: "Unit" },
+        { key: "allowanceAmount", label: "Amount", render: fmtMoney },
+        { key: "paymentFrequency", label: "Frequency" },
+        { key: "operativeFrom", label: "Operative From" },
+      ];
+
+      const EXPENSE_COLS = [
+        { key: "allowance", label: "Allowance" },
+        { key: "allowanceAmount", label: "Amount", render: fmtMoney },
+        { key: "paymentFrequency", label: "Frequency" },
+        { key: "operativeFrom", label: "Operative From" },
+      ];
+
+      // ── initialise ───────────────────────────────────────────────────────────
+
+      async function init() {
+        // 1. Load summary counts
+        try {
+          const summary = await apiFetch("/api/v1/reference-data/summary");
+          const loadingEl = document.getElementById("summary-loading");
+          const chipsEl = document.getElementById("summary-chips");
+          const badgeEl = document.getElementById("db-badge");
+
+          if (loadingEl) loadingEl.hidden = true;
+
+          if (summary.database_connected) {
+            badgeEl.innerHTML = `<span class="db-connected-badge">Connected to database</span>`;
+            chipsEl.hidden = false;
+            chipsEl.innerHTML = [
+              { label: "Awards", count: summary.awards },
+              { label: "Classifications", count: summary.classifications },
+              { label: "Penalty Rates", count: summary.penalties },
+              { label: "Wage Allowances", count: summary.wage_allowances },
+              { label: "Expense Allowances", count: summary.expense_allowances },
+            ].map(c => `
+              <div class="ref-chip">
+                <span class="ref-chip-count">${c.count.toLocaleString()}</span>
+                <span class="ref-chip-label">${c.label}</span>
+              </div>
+            `).join("");
+          } else {
+            const errEl = document.getElementById("summary-error");
+            errEl.textContent = "Database not connected. No reference data available.";
+            errEl.hidden = false;
+          }
+        } catch (e) {
+          const loadingEl = document.getElementById("summary-loading");
+          if (loadingEl) loadingEl.hidden = true;
+          const errEl = document.getElementById("summary-error");
+          errEl.textContent = `Could not connect to database: ${e.message}`;
+          errEl.hidden = false;
+        }
+
+        // 2. Load awards table (always shown, no filter)
+        try {
+          const awardsData = await apiFetch(`/api/v1/reference-data/awards?limit=500`);
+          awardsData._url = "/api/v1/reference-data/awards";
+          renderSection("awards-content", "awards-meta", AWARDS_COLS, awardsData);
+
+          // Populate award filter dropdown
+          const sel = document.getElementById("award-select");
+          sel.innerHTML = `<option value="">— all awards —</option>`;
+          awardsData.rows.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r.awardCode;
+            opt.textContent = `${r.awardCode} – ${r.name}`;
+            sel.appendChild(opt);
+          });
+          sel.disabled = false;
+
+          sel.addEventListener("change", () => {
+            const code = sel.value;
+            if (!code) {
+              ["cls", "penalties", "wage", "expense"].forEach(id => {
+                document.getElementById(`${id}-content`).innerHTML =
+                  `<div class="ref-empty">Select an award above to view this table.</div>`;
+                const meta = document.getElementById(`${id}-meta`);
+                if (meta) meta.textContent = "";
+              });
+              return;
+            }
+            const enc = encodeURIComponent(code);
+            loadSection("cls-content", "cls-meta", CLASSIFICATIONS_COLS,
+              `/api/v1/reference-data/classifications?award_code=${enc}`);
+            loadSection("penalties-content", "penalties-meta", PENALTIES_COLS,
+              `/api/v1/reference-data/penalties?award_code=${enc}`);
+            loadSection("wage-content", "wage-meta", WAGE_COLS,
+              `/api/v1/reference-data/wage-allowances?award_code=${enc}`);
+            loadSection("expense-content", "expense-meta", EXPENSE_COLS,
+              `/api/v1/reference-data/expense-allowances?award_code=${enc}`);
+
+            // Auto-open all sections when an award is selected
+            ["section-classifications", "section-penalties", "section-wage", "section-expense"]
+              .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.open = true;
+              });
+          });
+        } catch (e) {
+          document.getElementById("awards-content").innerHTML =
+            `<div class="ref-empty" style="color:#e53e3e">Failed to load awards: ${e.message}</div>`;
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
