@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Award Configuration Admin</label>
+    <description>Full access to Award Configuration object, fields, Apex controller, and LWC quick action. Assign to System Administrator and any users who manage award configurations.</description>
+
+    <!-- Object-level permissions: full CRUD + view/modify all -->
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <object>Award_Configuration__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+
+    <!-- Field-level permissions: read + edit on every custom field -->
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Award_Code__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Award_Name__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Employment_Type__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Classification__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Classification_Level__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Casual_Loading_Percent__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Effective_Date__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Ordinary_Hourly_Rate__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Is_Active__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Configured__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Award_Configuration__c.Resource__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+
+    <!-- Apex class access -->
+    <classAccesses>
+        <apexClass>AwardConfigurationController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+
+</PermissionSet>
