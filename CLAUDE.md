@@ -163,6 +163,136 @@ When adding new penalty or calculation behaviour, add regression tests in `tests
 
 ---
 
+## Salesforce LWC UI Standards
+
+These standards apply to all Quick Action LWC components in this project. Follow them to maintain a consistent look and feel across components.
+
+### Layout principles
+
+- **No scrollbars.** Quick Action modals have a fixed viewport height. Design every component to fit without scrolling. Strategies: remove help-text paragraphs, use inline button groups instead of comboboxes for small option sets, collapse verbose sections by default, place related short inputs side by side.
+- **No negative margins.** Do not use `margin: 0 -Npx` tricks to make elements bleed to the modal edge — they cause unwanted horizontal scrollbars inside the modal's scroll container.
+- **Context banner first.** The first element in the modal body is always an inline resource/context banner (no section header, just an icon + text line). Place any status badges (e.g. PRIMARY) flush right in this banner row.
+
+### Section headers
+
+Render as **rounded-corner pill badges**, not full-bleed dividers.
+
+```css
+.ca-section-header {
+    background: #f3f2f2;
+    border-radius: 6px;
+    color: #3e3e3c;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.07rem;
+    margin: 6px 0 2px;
+    padding: 6px 12px;
+    text-transform: uppercase;
+}
+```
+
+- Section headers that toggle a collapsible region add `ca-section-header_toggle` (flexbox, `cursor: pointer`, `justify-content: space-between`) with a `utility:chevronup/chevrondown` icon on the right.
+- Hover state: `background: #e0e0e0`.
+
+### Collapsible sections
+
+Use for any section that contains a dense detail view that is not always needed. Pattern:
+
+1. Section header pill is the toggle trigger (`onclick={handleToggle}`).
+2. `@track expanded = false` (collapsed by default).
+3. Collapsed state: compact one-line summary card showing the most important values.
+4. Expanded state: full detail grid rendered with `<template if:true={expanded}>`.
+5. Reset `expanded` to `false` when the underlying selection changes.
+
+### Input controls
+
+| Scenario | Control |
+|---|---|
+| 3–5 mutually exclusive short options | Inline segmented button group (not `lightning-combobox`) |
+| Long option lists or dynamic options | `lightning-combobox` |
+| Two short inputs on the same row | `ca-field-row` / `ca-field-col` flex layout |
+| Dates and small numeric inputs | `lightning-input`, placed side by side where possible |
+
+**Segmented button group pattern** (e.g. Employment Type):
+
+```html
+<div class="ca-type-group">
+  <template for:each={options} for:item="opt">
+    <button key={opt.value} class={opt.buttonClass}
+            data-value={opt.value} onclick={handleClick} type="button">
+      {opt.label}
+    </button>
+  </template>
+</div>
+```
+
+Active button: `background: #0070d2; color: #fff; font-weight: 600`.
+Inactive button: `background: #fff; border: 1px solid #dddbda; color: #3e3e3c`.
+First child: `border-radius: 4px 0 0 4px`. Last child: `border-radius: 0 4px 4px 0`.
+
+### Floating cards / detail panels
+
+Panels that display read-only structured data float inside their section body:
+
+```css
+.ca-panel {
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin: 0 6px 4px;   /* 6px side margin gives the floating effect */
+    padding: 12px 16px 10px;
+}
+```
+
+Data inside panels uses a two-row CSS grid:
+- Row 1: primary fields (`grid-template-columns: 2fr 1.5fr 0.4fr 1fr 1.2fr`)
+- Row 2: secondary/meta fields (`grid-template-columns: repeat(4, 1fr)`)
+- Rows separated by `border-top: 1px solid #efefef`
+- Column gap: `18px`; label font: `0.6875rem` uppercase muted (`#706e6b`); value font: `0.875rem` `#080707`
+
+### Status badges
+
+All badges share a base pattern: small rounded pill, uppercase text, coloured border + tinted background.
+
+| Badge | Background | Border | Text |
+|---|---|---|---|
+| Primary | `#e8f4e8` | `#2e844a` | `#1a5c34` |
+| Casual loading | `#fef3cd` | `#f0c040` | `#7a5c00` |
+
+Full-size badge (`border-radius: 12px`, `padding: 2px 10px 2px 6px`) for banner placement.
+Small badge (`border-radius: 3px`, `padding: 1px 6px`, `font-size: 0.6rem`) for inline use inside cards.
+
+### Colour palette
+
+| Token | Hex | Usage |
+|---|---|---|
+| Text primary | `#080707` | Field values, body text |
+| Text secondary | `#3e3e3c` | Labels, banner text |
+| Text muted | `#706e6b` | Detail labels, meta text |
+| Border | `#dddbda` | Cards, inputs, dividers |
+| Background subtle | `#f3f2f2` | Section header pills |
+| Background card | `#f8f9fb` | Compact summary cards |
+| Interactive blue | `#0070d2` | Active button, links |
+| Interactive blue hover | `#005fb2` | — |
+| Green (positive) | `#2e844a` | Rates, primary badge border |
+| Amber (casual) | `#f0c040` | Casual badge border |
+| Warning | `#dd7a01` | Warning icons |
+
+### Apex controller conventions
+
+- Use `without sharing` on Quick Action controllers — this ensures cross-object field traversal (e.g. `Resource__r.Name`) works regardless of the Maica package's private sharing model.
+- Prefer returning meaningful values from `@AuraEnabled` DML methods (e.g. `Boolean` flags, updated records) rather than `void`, so the LWC can update state without a second round-trip.
+- Auto-primary / singleton-per-resource patterns: always check sibling records before setting a "only one active" flag; use `AND Id != :thisId` in the sibling query to exclude self.
+
+### LWC JS conventions
+
+- Make `@api recordId` a reactive getter/setter with an `_isConnected` flag. Quick Action modals sometimes set `recordId` *after* `connectedCallback` fires; the setter triggers `loadCurrentConfig()` in that case.
+- Use `@track` for all state that drives template rendering.
+- Keep `isLoading = true` for the initial `connectedCallback` `Promise.all`; use a separate `loadingClassifications` flag for subordinate async loads so the whole form doesn't re-hide.
+- Swallow benign "no rows" / null-config errors in `loadCurrentConfig`; only surface genuine errors via `this.errorMessage`.
+
+---
+
 ## Future Migration Notes
 
 The architecture is designed for eventual migration to Salesforce Lightning Web Components (LWC). The `src/lib/` modules contain pure calculation logic that can be ported to Apex with minimal changes. The existing test scenarios serve as specification for Apex unit tests. See `ARCHITECTURE.md` for the full migration plan.
