@@ -132,7 +132,7 @@ public with sharing class AwardConfigurationController {
         update config;
     }
 
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static Award_Configuration__c getCurrentConfiguration(Id configId) {
         if (configId == null) return null;
         List<Award_Configuration__c> records = [

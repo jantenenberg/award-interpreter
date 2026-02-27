@@ -1,81 +1,149 @@
-.context-banner {
-    background: #f4f6f9;
-    border-radius: 6px;
-}
+/* ── Section structure ─────────────────────────────────────────────────────── */
 
-/* ── Selected classification panel ───────────────────────────────────────── */
-
-.classification-panel {
-    background: #fff;
-    border: 1px solid #dddbda;
-    border-radius: 4px;
-    padding: 12px 16px 8px;
-}
-
-.panel-header {
-    align-items: flex-start;
-}
-
-.panel-title {
-    font-size: 0.75rem;
-    font-weight: 700;
+.ca-section-header {
+    background: #f3f2f2;
+    border-top: 1px solid #dddbda;
+    border-bottom: 1px solid #dddbda;
     color: #3e3e3c;
-    letter-spacing: 0.0625rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07rem;
+    padding: 6px 16px;
+    margin: 0 -16px;
     text-transform: uppercase;
 }
 
-.casual-badge {
+.ca-section-header_secondary {
+    background: #eaf3fb;
+    border-color: #c9dff0;
+    color: #0070d2;
+}
+
+.ca-section-body {
+    padding: 12px 0;
+}
+
+/* ── Resource banner ───────────────────────────────────────────────────────── */
+
+.ca-resource-label {
+    color: #3e3e3c;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* ── Help text ─────────────────────────────────────────────────────────────── */
+
+.ca-help-text {
+    color: #706e6b;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    margin: 0 0 12px;
+}
+
+/* ── Current configuration grid ────────────────────────────────────────────── */
+
+.ca-current-config {
+    background: #f4f6f9;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    padding: 12px 16px !important;
+}
+
+.ca-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px 16px;
+}
+
+.ca-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ca-detail-label {
+    color: #706e6b;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04rem;
+}
+
+.ca-detail-value {
+    color: #080707;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.ca-detail-value_rate {
+    color: #2e844a;
+    font-weight: 700;
+}
+
+/* ── Inline classification loading spinner ─────────────────────────────────── */
+
+.ca-inline-spinner {
+    align-items: center;
+    display: flex;
+    gap: 28px;
+    height: 36px;
+    padding-left: 4px;
+}
+
+/* ── Selected classification panel ─────────────────────────────────────────── */
+
+.ca-classification-panel {
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    padding: 12px 16px !important;
+}
+
+.ca-casual-badge-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
+.ca-casual-badge {
     background: #fef3cd;
     border: 1px solid #f0c040;
     border-radius: 4px;
     color: #7a5c00;
     font-size: 0.7rem;
     font-weight: 600;
-    padding: 2px 8px;
-    white-space: nowrap;
+    padding: 3px 10px;
 }
 
-.panel-row {
-    padding: 8px 0 4px;
+.ca-classification-grid {
     border-top: 1px solid #f3f2f2;
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 0.5fr 1fr 1fr;
+    gap: 0 16px;
+    padding: 10px 0 6px;
 }
 
-.panel-row-meta {
-    padding-top: 6px;
+.ca-classification-meta {
+    border-top: 1px solid #f3f2f2;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0 16px;
+    padding: 8px 0 2px;
 }
 
-.panel-label {
-    font-size: 0.7rem;
-    color: #706e6b;
-    margin: 0 0 2px;
+.ca-cl-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.panel-value {
-    font-size: 0.8125rem;
-    color: #080707;
-    font-weight: 500;
+/* Calculated rate input — styled inline */
+.ca-rate-input {
     margin: 0;
-    line-height: 1.4;
-    word-break: break-word;
 }
 
-.panel-value-muted {
-    color: #706e6b;
-}
-
-/* Calculated rate input styled as inline text */
-.rate-input {
-    --slds-c-input-color-border: transparent;
-    --slds-c-input-color-border-focus: #1b96ff;
-}
-
-.rate-input lightning-input {
-    --lwc-colorBorder: transparent;
-}
-
-.panel-sublabel {
-    font-size: 0.65rem;
+.ca-rate-unit {
     color: #2e844a;
-    font-weight: 500;
-    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-top: 1px;
 }
