@@ -6,3 +6,4 @@ startCommand = "cd backend && pip install alembic sqlalchemy psycopg2-binary pyt
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
+
