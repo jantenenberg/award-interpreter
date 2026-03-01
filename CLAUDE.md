@@ -152,6 +152,62 @@ When adding new penalty or calculation behaviour, add regression tests in `tests
 
 ---
 
+## Development Rules
+
+These rules apply to every change made in this project, regardless of layer (browser JS, backend, or Salesforce).
+
+### 1 — Unit tests required before deployment
+
+Whenever a new component, Apex class, or calculation module is developed:
+
+1. Write unit tests covering all significant logic paths and edge cases.
+2. Run the full test suite and confirm every test passes before deploying or committing.
+3. For **Salesforce Apex**: run `sf apex run test --test-level RunLocalTests -o MyOrg` and verify 0 failures.
+4. For **browser/backend JS**: run `npm test` and verify 0 failures.
+5. Never deploy a component whose tests are failing or untested. If a method is added to an existing class, add a corresponding test method to the existing test class.
+
+### 2 — Salesforce development standards
+
+All Salesforce metadata and code must comply with [Salesforce Well-Architected](https://architect.salesforce.com/well-architected/overview) and the [Apex Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/) best practices:
+
+- **Bulkify all Apex.** Never perform SOQL queries or DML inside loops. Collect records into lists first, then perform a single query/DML operation.
+- **Governor limits.** Stay well within SOQL (100 per transaction), DML (150), and heap limits. Use `@future` or `Queueable` for operations that risk exceeding limits.
+- **`with sharing` vs `without sharing`.** Default to `with sharing`. Only use `without sharing` where cross-package object access is explicitly required (e.g. `maica_cc__Resource__c` traversal) and document why in a comment.
+- **No hardcoded IDs.** Never hardcode Salesforce record IDs, profile IDs, or org-specific values in code or metadata.
+- **Descriptive naming.** Class, method, field, and variable names must be self-describing. Avoid abbreviations except for well-known domain terms (e.g. `FT`, `CA`).
+- **LWC:** Follow the [LWC Developer Guide](https://developer.salesforce.com/docs/component-library/documentation/en/lwc). Use `@api`, `@track`, and wire adapters correctly. Do not manipulate the DOM directly — use reactive properties and templates.
+- **SLDS.** Use [Salesforce Lightning Design System](https://www.lightningdesignsystem.com/) utility classes and base components wherever possible before writing custom CSS.
+- **Test isolation.** Apex tests must use `@testSetup` or inline data creation; never rely on existing org data (`seeAllData=false` by default).
+
+### 3 — Administrator profile access for new objects and fields
+
+Whenever a new custom object or custom field is created:
+
+1. Add the object and all its fields to `force-app/main/default/profiles/Admin.profile-meta.xml` with full read/write access before deploying.
+2. For **custom objects**, include:
+   ```xml
+   <objectPermissions>
+       <object>My_Object__c</object>
+       <allowCreate>true</allowCreate>
+       <allowDelete>true</allowDelete>
+       <allowEdit>true</allowEdit>
+       <allowRead>true</allowRead>
+       <modifyAllRecords>true</modifyAllRecords>
+       <viewAllRecords>true</viewAllRecords>
+   </objectPermissions>
+   ```
+3. For **custom fields**, include:
+   ```xml
+   <fieldPermissions>
+       <field>My_Object__c.My_Field__c</field>
+       <editable>true</editable>
+       <readable>true</readable>
+   </fieldPermissions>
+   ```
+4. If the project uses a Permission Set (e.g. `Award_Configuration_Admin`) instead of the Admin profile, add the same permissions there and verify the set is assigned to the relevant users before deployment.
+
+---
+
 ## Important Conventions
 
 - **No build tool.** ES module `import`/`export` is used directly in the browser. Avoid CommonJS (`require`).
