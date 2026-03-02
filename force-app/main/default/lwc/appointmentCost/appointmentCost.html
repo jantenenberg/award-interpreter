@@ -1,0 +1,169 @@
+<template>
+    <lightning-quick-action-panel header="Appointment Cost">
+
+        <template if:true={isLoading}>
+            <div class="slds-is-relative" style="min-height: 120px;">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+
+            <!-- ─── APPOINTMENT BANNER ────────────────────────────────────────── -->
+            <div class="ca-resource-banner">
+                <div class="ca-resource-banner-left">
+                    <lightning-icon icon-name="standard:service_appointment" size="x-small" class="ca-resource-icon"></lightning-icon>
+                    <span>Cost for <strong>{participantName}</strong></span>
+                </div>
+                <span class={statusBadgeClass}>{appointment.status}</span>
+            </div>
+
+            <!-- ─── DATE SELECTION ───────────────────────────────────────────── -->
+            <div class="ca-section-header">DATE SELECTION</div>
+            <div class="ca-section-body">
+                <div class="slds-form-element slds-m-bottom_x-small">
+                    <label class="slds-form-element__label">
+                        <abbr class="slds-required" title="required">*</abbr> Dates to use for calculation
+                    </label>
+                    <div class="ca-type-group">
+                        <template for:each={dateSetOptions} for:item="opt">
+                            <button
+                                key={opt.value}
+                                class={opt.buttonClass}
+                                data-value={opt.value}
+                                disabled={opt.disabled}
+                                onclick={handleDateSetChange}
+                                type="button">
+                                {opt.label}
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Date preview row -->
+                <template if:true={selectedDateStart}>
+                    <div class="ca-date-preview">
+                        <lightning-icon icon-name="utility:clock" size="xx-small" class="ca-date-icon"></lightning-icon>
+                        <span>{selectedDateStart} → {selectedDateEnd}</span>
+                    </div>
+                </template>
+                <template if:false={selectedDateStart}>
+                    <p class="slds-text-color_weak slds-text-body_small">
+                        No dates available for the selected option.
+                    </p>
+                </template>
+            </div>
+
+            <!-- ─── RESOURCES ─────────────────────────────────────────────────── -->
+            <div class="ca-section-header">RESOURCES ({resourceCount})</div>
+            <div class="ca-section-body">
+                <template if:true={hasResourcesWithoutAward}>
+                    <div class="ca-warning-banner">
+                        <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
+                        <span>Some resources have no Award Configuration linked — they are excluded from the calculation.</span>
+                    </div>
+                </template>
+
+                <template for:each={resources} for:item="r">
+                    <div key={r.resourceId} class="ca-resource-row">
+                        <div class="ca-resource-row-left">
+                            <span class="ca-resource-name">{r.resourceName}</span>
+                            <template if:true={r.hasAwardConfig}>
+                                <span class="ca-resource-meta">{r.awardCode} · {r.classification} · Lvl {r.classificationLevel}</span>
+                            </template>
+                            <template if:false={r.hasAwardConfig}>
+                                <span class="ca-resource-meta ca-resource-meta_warn">No award configuration linked</span>
+                            </template>
+                        </div>
+                        <template if:true={r.hasAwardConfig}>
+                            <span class={r.employmentTypeBadgeClass}>{r.employmentType}</span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- ─── COST RESULTS ──────────────────────────────────────────────── -->
+            <template if:true={costResult}>
+                <div class="ca-section-header ca-section-header_toggle" onclick={handleToggleResults}>
+                    <span>COST BREAKDOWN</span>
+                    <lightning-icon icon-name={resultsToggleIcon} size="xx-small" class="ca-toggle-icon"></lightning-icon>
+                </div>
+
+                <template if:true={resultsExpanded}>
+                <div class="ca-section-body ca-section-body_details">
+
+                    <template for:each={costResult.resources} for:item="r">
+                    <div key={r.resourceId} class="ca-classification-panel slds-m-bottom_x-small">
+                        <div class="ca-cost-resource-header">
+                            <span class="ca-cl-compact-name">{r.resourceName}</span>
+                            <span class="ca-cost-total">{r.grossPayFormatted}</span>
+                        </div>
+                        <div class="ca-cost-meta">
+                            <span>{r.classification} · Lvl {r.classificationLevel} · {r.paidHours}h · {r.dayType}</span>
+                        </div>
+
+                        <!-- Segment breakdown -->
+                        <table class="ca-segment-table">
+                            <thead>
+                                <tr>
+                                    <th class="ca-th">Description</th>
+                                    <th class="ca-th ca-th_right">Hrs</th>
+                                    <th class="ca-th ca-th_right">Rate</th>
+                                    <th class="ca-th ca-th_right">Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={r.segments} for:item="seg">
+                                    <tr key={seg.penaltyKey}>
+                                        <td class="ca-td">{seg.description}</td>
+                                        <td class="ca-td ca-td_right">{seg.hours}</td>
+                                        <td class="ca-td ca-td_right">{seg.rateFormatted}</td>
+                                        <td class="ca-td ca-td_right">{seg.costFormatted}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                        <template if:true={r.hasWarnings}>
+                            <div class="ca-warning-banner ca-warning-banner_sm slds-m-top_x-small">
+                                <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
+                                <span>{r.warningText}</span>
+                            </div>
+                        </template>
+                    </div>
+                    </template>
+
+                </div>
+                </template>
+
+                <!-- Total bar (always visible when results present) -->
+                <div class="ca-total-bar">
+                    <span class="ca-total-label">TOTAL · {costResult.totalHours}h</span>
+                    <span class="ca-total-amount">{totalCostFormatted}</span>
+                </div>
+            </template>
+
+        </template>
+
+        <div slot="footer">
+            <lightning-button
+                label="Close"
+                onclick={handleClose}
+                class="slds-m-right_x-small">
+            </lightning-button>
+            <lightning-button
+                variant="brand"
+                label="Calculate"
+                onclick={handleCalculate}
+                disabled={isCalculateDisabled}>
+            </lightning-button>
+        </div>
+
+    </lightning-quick-action-panel>
+</template>

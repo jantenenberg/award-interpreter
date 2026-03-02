@@ -206,3 +206,47 @@ class ShiftRosterResponse(BaseModel):
     shifts: list[ShiftRosterShiftResult]
     worker_totals: list[WorkerTotal]
     warnings: list[str]
+
+
+# --- Appointment cost (Salesforce LWC) ---
+
+class AppointmentResourceInput(BaseModel):
+    resource_id: str
+    resource_name: str
+    award_code: str
+    employment_type: str
+    classification: str
+    classification_level: int
+    casual_loading_percent: float = Field(default=0.0, ge=0, le=100)
+    ordinary_hourly_rate: Optional[float] = None  # use stored rate if provided; otherwise look up
+    shift_start: str   # ISO 8601 datetime e.g. "2026-03-01T09:00:00"
+    shift_end: str     # ISO 8601 datetime
+
+
+class AppointmentResourceResult(BaseModel):
+    resource_id: str
+    resource_name: str
+    award_code: str
+    employment_type: str
+    classification: str
+    classification_level: int
+    ordinary_hourly_rate: float
+    paid_hours: float
+    gross_pay: float
+    day_type: str
+    segments: list[ShiftSegment]
+    warnings: list[str]
+    error: Optional[str] = None
+
+
+class AppointmentCostRequest(BaseModel):
+    appointment_id: str
+    resources: list[AppointmentResourceInput]
+
+
+class AppointmentCostResponse(BaseModel):
+    appointment_id: str
+    total_cost: float
+    total_hours: float
+    resources: list[AppointmentResourceResult]
+    warnings: list[str]

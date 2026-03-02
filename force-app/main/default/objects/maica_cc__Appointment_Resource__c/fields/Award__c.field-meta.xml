@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Award__c</fullName>
+    <label>Award</label>
+    <type>Lookup</type>
+    <referenceTo>Award_Configuration__c</referenceTo>
+    <relationshipName>Appointment_Resources</relationshipName>
+    <relationshipLabel>Appointment Resources</relationshipLabel>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
