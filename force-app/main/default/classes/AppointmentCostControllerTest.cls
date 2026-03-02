@@ -82,6 +82,54 @@ private class AppointmentCostControllerTest {
         System.assertEquals(appts[0].Id, result.appointmentId);
     }
 
+    @isTest
+    static void testGetExistingBreaks() {
+        List<maica_cc__Appointment__c> appts = [SELECT Id FROM maica_cc__Appointment__c LIMIT 1];
+        if (appts.isEmpty()) return;
+
+        Test.startTest();
+        List<AppointmentCostController.ExistingBreakInfo> breaks =
+            AppointmentCostController.getExistingBreaks(appts[0].Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, breaks);
+    }
+
+    @isTest
+    static void testCreateBreaks() {
+        List<maica_cc__Appointment_Resource__c> apptResources = [
+            SELECT maica_cc__Appointment__c, maica_cc__Resource__c
+            FROM maica_cc__Appointment_Resource__c
+            WHERE maica_cc__Resource__c != null
+            LIMIT 1
+        ];
+        if (apptResources.isEmpty()) return;
+
+        Id apptId = apptResources[0].maica_cc__Appointment__c;
+        Id resId = apptResources[0].maica_cc__Resource__c;
+
+        AppointmentCostController.BreakRequest req = new AppointmentCostController.BreakRequest();
+        req.resourceId = resId;
+        req.breakStartIso = '2025-12-17T15:45:00';
+        req.breakEndIso   = '2025-12-17T16:15:00';
+        req.durationMins  = 30;
+
+        Test.startTest();
+        AppointmentCostController.createBreaks(apptId, new List<AppointmentCostController.BreakRequest>{ req });
+        Test.stopTest();
+
+        List<maica_cc__Unavailability__c> created = [
+            SELECT Id, maica_cc__Type__c, maica_cc__Status__c, maica_cc__Billable__c,
+                   maica_cc__Resource__c, maica_cc__Appointment__c
+            FROM maica_cc__Unavailability__c
+            WHERE maica_cc__Appointment__c = :apptId
+            AND maica_cc__Type__c = 'Appointment Break'
+        ];
+        System.assertEquals(1, created.size());
+        System.assertEquals('Approved', created[0].maica_cc__Status__c);
+        System.assertEquals(false, created[0].maica_cc__Billable__c);
+    }
+
     // ── Inner mock class ──────────────────────────────────────────────────────
 
     private class AppointmentCostMock implements HttpCalloutMock {

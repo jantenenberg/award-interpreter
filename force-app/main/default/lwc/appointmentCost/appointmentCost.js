@@ -1,8 +1,11 @@
 import { LightningElement, api, track } from 'lwc';
 import { CloseActionScreenEvent } from 'lightning/actions';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getAppointmentDetail from '@salesforce/apex/AppointmentCostController.getAppointmentDetail';
 import getAppointmentResources from '@salesforce/apex/AppointmentCostController.getAppointmentResources';
 import calculateCost from '@salesforce/apex/AppointmentCostController.calculateCost';
+import getExistingBreaks from '@salesforce/apex/AppointmentCostController.getExistingBreaks';
+import createBreaks from '@salesforce/apex/AppointmentCostController.createBreaks';
 
 const SCHEDULED_STATUSES = new Set(['Scheduled']);
 const ORDINARY_HOURS_THRESHOLD   = 9;
@@ -27,7 +30,10 @@ export default class AppointmentCost extends LightningElement {
     @track resources = [];
     @track selectedDateSet = 'scheduled';
     @track costResult = null;
-    @track expandedResources = {};   // resourceId -> boolean (default true)
+    @track expandedResources = {};
+    @track showCreateBreaksModal = false;
+    @track breakRows = [];
+    @track isCreatingBreaks = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -96,6 +102,33 @@ export default class AppointmentCost extends LightningElement {
 
     get showAdjustedTotal() {
         return (this.resourcePanels || []).some(rp => rp.hasAdjustedCost);
+    }
+
+    get hasRequiredBreaks() {
+        return (this.resourcePanels || []).some(rp => rp.hasAdjustedCost);
+    }
+
+    get hasBreakRows() { return this.breakRows?.length > 0; }
+
+    get selectedBreakCount() {
+        return (this.breakRows || []).filter(r => r.selected).length;
+    }
+
+    get allBreaksSelected() {
+        return this.breakRows?.length > 0 && this.breakRows.every(r => r.selected);
+    }
+
+    get someBreaksSelected() {
+        return (this.breakRows || []).some(r => r.selected);
+    }
+
+    get createSelectedLabel() {
+        const n = this.selectedBreakCount;
+        return n > 0 ? `Create Selected (${n})` : 'Create Selected';
+    }
+
+    get isCreateSelectedDisabled() {
+        return this.isCreatingBreaks || !this.someBreaksSelected;
     }
 
     get adjustedTotalFormatted() {
@@ -202,6 +235,85 @@ export default class AppointmentCost extends LightningElement {
 
     handleClose() {
         this.dispatchEvent(new CloseActionScreenEvent());
+    }
+
+    async handleCreateBreaksClick() {
+        if (!this._recordId || !this.hasRequiredBreaks) return;
+        this.showCreateBreaksModal = true;
+        this.isCreatingBreaks = false;
+        try {
+            const existing = await getExistingBreaks({ appointmentId: this._recordId });
+            const existingResourceIds = new Set((existing || []).map(b => b.resourceId));
+            const panelsNeedingBreak = (this.resourcePanels || []).filter(
+                rp => rp.hasAdjustedCost && !existingResourceIds.has(rp.resourceId)
+            );
+            this.breakRows = panelsNeedingBreak.map(rp => {
+                const shift = this._getShiftForResource(rp.resourceId);
+                const breakStart = this._addHours(shift.start, MEAL_BREAK_THRESHOLD_HOURS);
+                const breakEnd   = this._addMinutes(breakStart, STANDARD_MEAL_BREAK_MINS);
+                return {
+                    resourceId:        rp.resourceId,
+                    resourceName:      rp.resourceName,
+                    shiftDisplay:      shift.start && shift.end ? `${this._fmt(shift.start)} → ${this._fmt(shift.end)}` : '—',
+                    ruleDescription:   `30-min meal break (MA000004 cl.34.1)`,
+                    breakStartIso:     breakStart,
+                    breakEndIso:       breakEnd,
+                    breakStartDisplay: this._fmt(breakStart),
+                    breakEndDisplay:   this._fmt(breakEnd),
+                    durationMins:      STANDARD_MEAL_BREAK_MINS,
+                    selected:          true,
+                };
+            });
+        } catch (e) {
+            this.errorMessage = 'Failed to load required breaks: ' + (e.body?.message || e.message);
+        }
+    }
+
+    handleCloseBreaksModal() {
+        this.showCreateBreaksModal = false;
+        this.breakRows = [];
+    }
+
+    handleBreakRowChange(event) {
+        const id = event.currentTarget.dataset.resourceId;
+        this.breakRows = this.breakRows.map(r =>
+            r.resourceId === id ? { ...r, selected: !r.selected } : r
+        );
+    }
+
+    handleSelectAllBreaks() {
+        const allSelected = this.allBreaksSelected;
+        this.breakRows = this.breakRows.map(r => ({ ...r, selected: !allSelected }));
+    }
+
+    async handleCreateSelectedBreaks() {
+        const toCreate = (this.breakRows || []).filter(r => r.selected);
+        if (toCreate.length === 0) return;
+        this.isCreatingBreaks = true;
+        try {
+            const requests = toCreate.map(r => ({
+                resourceId:     r.resourceId,
+                breakStartIso:  r.breakStartIso,
+                breakEndIso:    r.breakEndIso,
+                durationMins:   r.durationMins,
+            }));
+            await createBreaks({ appointmentId: this._recordId, requests });
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Breaks created',
+                message: `${toCreate.length} break(s) created successfully.`,
+                variant: 'success',
+            }));
+            this.handleCloseBreaksModal();
+            await this.loadData();
+        } catch (e) {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Error',
+                message: e.body?.message || e.message,
+                variant: 'error',
+            }));
+        } finally {
+            this.isCreatingBreaks = false;
+        }
     }
 
     // ── Explanation engine ────────────────────────────────────────────────────
@@ -325,6 +437,44 @@ export default class AppointmentCost extends LightningElement {
 
     _anyResourceHasCheckInOut() {
         return this.resources.some(r => r.checkInTime && r.checkOutTime);
+    }
+
+    _getShiftForResource(resourceId) {
+        const appt = this.appointment;
+        const res  = this.resources.find(r => r.resourceId === resourceId);
+        if (!appt || !res) return { start: null, end: null };
+        let start, end;
+        if (this.selectedDateSet === 'scheduled') {
+            start = appt.scheduledStart;
+            end   = appt.scheduledEnd;
+        } else if (this.selectedDateSet === 'actual') {
+            start = res.actualStart || appt.actualStart;
+            end   = res.actualEnd   || appt.actualEnd;
+        } else {
+            start = res.checkInTime;
+            end   = res.checkOutTime;
+        }
+        return { start, end };
+    }
+
+    _toIsoLocal(d) {
+        const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+        const h = String(d.getHours()).padStart(2, '0'), min = String(d.getMinutes()).padStart(2, '0'), s = String(d.getSeconds()).padStart(2, '0');
+        return `${y}-${m}-${day}T${h}:${min}:${s}`;
+    }
+
+    _addHours(iso, hours) {
+        if (!iso) return null;
+        const d = new Date(iso);
+        d.setTime(d.getTime() + hours * 60 * 60 * 1000);
+        return this._toIsoLocal(d);
+    }
+
+    _addMinutes(iso, mins) {
+        if (!iso) return null;
+        const d = new Date(iso);
+        d.setTime(d.getTime() + mins * 60 * 1000);
+        return this._toIsoLocal(d);
     }
 
     _enrichResources(raw) {

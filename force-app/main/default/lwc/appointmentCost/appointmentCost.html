@@ -192,7 +192,65 @@
 
         <div slot="footer">
             <lightning-button label="Close" onclick={handleClose}></lightning-button>
+            <template if:true={hasRequiredBreaks}>
+                <lightning-button label="Create Breaks" variant="brand" onclick={handleCreateBreaksClick} class="slds-m-left_x-small"></lightning-button>
+            </template>
         </div>
+
+        <!-- Create Breaks modal -->
+        <template if:true={showCreateBreaksModal}>
+            <section class="ca-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-breaks-title">
+                <div class="ca-modal-card">
+                    <div class="ca-modal-header">
+                        <h2 id="create-breaks-title" class="ca-modal-title">Create Breaks</h2>
+                        <p class="ca-modal-subtitle">Select the breaks to create to meet award requirements.</p>
+                    </div>
+                    <div class="ca-modal-body">
+                        <template if:true={hasBreakRows}>
+                            <div class="ca-section-header">REQUIRED BREAKS</div>
+                            <table class="ca-breaks-table">
+                                <thead>
+                                    <tr>
+                                        <th class="ca-breaks-th ca-breaks-th_cb">
+                                            <lightning-input type="checkbox" checked={allBreaksSelected} onchange={handleSelectAllBreaks} data-label="Select all"></lightning-input>
+                                        </th>
+                                        <th class="ca-breaks-th">Resource</th>
+                                        <th class="ca-breaks-th">Shift</th>
+                                        <th class="ca-breaks-th">Rule</th>
+                                        <th class="ca-breaks-th">Break start</th>
+                                        <th class="ca-breaks-th">Break end</th>
+                                        <th class="ca-breaks-th ca-breaks-th_right">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={breakRows} for:item="row">
+                                        <tr key={row.resourceId} class="ca-breaks-tr">
+                                            <td class="ca-breaks-td ca-breaks-td_cb">
+                                                <lightning-input type="checkbox" checked={row.selected} data-resource-id={row.resourceId} onchange={handleBreakRowChange}></lightning-input>
+                                            </td>
+                                            <td class="ca-breaks-td">{row.resourceName}</td>
+                                            <td class="ca-breaks-td">{row.shiftDisplay}</td>
+                                            <td class="ca-breaks-td">{row.ruleDescription}</td>
+                                            <td class="ca-breaks-td">{row.breakStartDisplay}</td>
+                                            <td class="ca-breaks-td">{row.breakEndDisplay}</td>
+                                            <td class="ca-breaks-td ca-breaks-td_right">{row.durationMins} min</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+                        <template if:false={hasBreakRows}>
+                            <p class="slds-text-color_weak">No required breaks — all resources already have breaks recorded or shifts are within limits.</p>
+                        </template>
+                    </div>
+                    <div class="ca-modal-footer">
+                        <lightning-button label="Cancel" onclick={handleCloseBreaksModal}></lightning-button>
+                        <lightning-button variant="brand" label={createSelectedLabel} onclick={handleCreateSelectedBreaks}
+                                          disabled={isCreateSelectedDisabled} data-label="Create selected breaks"></lightning-button>
+                    </div>
+                </div>
+            </section>
+        </template>
 
     </lightning-quick-action-panel>
 </template>

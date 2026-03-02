@@ -78,6 +78,18 @@ public without sharing class AppointmentCostController {
         @AuraEnabled public List<String> warnings;
     }
 
+    public class ExistingBreakInfo {
+        @AuraEnabled public String resourceId;
+        @AuraEnabled public Integer durationMins;
+    }
+
+    public class BreakRequest {
+        @AuraEnabled public String resourceId;
+        @AuraEnabled public String breakStartIso;
+        @AuraEnabled public String breakEndIso;
+        @AuraEnabled public Integer durationMins;
+    }
+
     // ── @AuraEnabled methods ──────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=true)
@@ -225,6 +237,55 @@ public without sharing class AppointmentCostController {
         }
 
         return parseApiResponse(res.getBody());
+    }
+
+    private static final String UNAVAIL_TYPE_APPOINTMENT_BREAK = 'Appointment Break';
+
+    @AuraEnabled
+    public static List<ExistingBreakInfo> getExistingBreaks(Id appointmentId) {
+        List<maica_cc__Unavailability__c> breaks = [
+            SELECT maica_cc__Resource__c, maica_cc__Duration_mins__c
+            FROM maica_cc__Unavailability__c
+            WHERE maica_cc__Appointment__c = :appointmentId
+            AND maica_cc__Type__c = :UNAVAIL_TYPE_APPOINTMENT_BREAK
+        ];
+        List<ExistingBreakInfo> results = new List<ExistingBreakInfo>();
+        for (maica_cc__Unavailability__c b : breaks) {
+            ExistingBreakInfo info = new ExistingBreakInfo();
+            info.resourceId = b.maica_cc__Resource__c;
+            info.durationMins = b.maica_cc__Duration_mins__c != null ? b.maica_cc__Duration_mins__c.intValue() : 0;
+            results.add(info);
+        }
+        return results;
+    }
+
+    @AuraEnabled
+    public static void createBreaks(Id appointmentId, List<BreakRequest> requests) {
+        if (requests == null || requests.isEmpty()) return;
+
+        List<maica_cc__Unavailability__c> toInsert = new List<maica_cc__Unavailability__c>();
+        for (BreakRequest req : requests) {
+            String fromStr = req.breakStartIso.replace('T', ' ');
+            String toStr   = req.breakEndIso.replace('T', ' ');
+            if (fromStr.contains('.')) fromStr = fromStr.substringBefore('.');
+            if (toStr.contains('.'))   toStr   = toStr.substringBefore('.');
+            if (fromStr.length() > 19) fromStr = fromStr.substring(0, 19);
+            if (toStr.length() > 19)   toStr   = toStr.substring(0, 19);
+            Datetime fromDt = Datetime.valueOf(fromStr);
+            Datetime toDt   = Datetime.valueOf(toStr);
+
+            maica_cc__Unavailability__c u = new maica_cc__Unavailability__c();
+            u.maica_cc__Appointment__c    = appointmentId;
+            u.maica_cc__Resource__c       = req.resourceId;
+            u.maica_cc__Type__c           = UNAVAIL_TYPE_APPOINTMENT_BREAK;
+            u.maica_cc__Status__c         = 'Approved';
+            u.maica_cc__Billable__c       = false;
+            u.maica_cc__Unavailable_From__c = fromDt;
+            u.maica_cc__Unavailable_To__c   = toDt;
+            // Duration__c and Duration_mins__c are formula fields, calculated from From/To
+            toInsert.add(u);
+        }
+        insert toInsert;
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
