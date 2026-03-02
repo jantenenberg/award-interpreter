@@ -47,6 +47,7 @@ export default class AppointmentCost extends LightningElement {
             this.appointment = appt;
             this.resources = this._enrichResources(rawResources);
             this.selectedDateSet = SCHEDULED_STATUSES.has(appt?.status) ? 'scheduled' : 'actual';
+            await this._doCalculate();
         } catch (e) {
             this.errorMessage = 'Failed to load appointment: ' + (e.body?.message || e.message);
         }
@@ -164,6 +165,7 @@ export default class AppointmentCost extends LightningElement {
         this.selectedDateSet = event.currentTarget.dataset.value;
         this.costResult = null;
         this.expandedResources = {};
+        this._doCalculate();
     }
 
     handleToggleResource(event) {
@@ -173,6 +175,11 @@ export default class AppointmentCost extends LightningElement {
     }
 
     async handleCalculate() {
+        await this._doCalculate();
+    }
+
+    async _doCalculate() {
+        if (!this._recordId || !this.resources.some(r => r.hasAwardConfig)) return;
         this.errorMessage = '';
         this.isLoading = true;
         try {
@@ -183,7 +190,6 @@ export default class AppointmentCost extends LightningElement {
                 endOverride:   null,
             });
             this.costResult = result;
-            // Default all resource panels to expanded
             const expanded = {};
             (result.resources || []).forEach(r => { expanded[r.resourceId] = true; });
             this.expandedResources = expanded;

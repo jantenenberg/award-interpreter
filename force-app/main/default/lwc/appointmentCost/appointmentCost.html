@@ -52,32 +52,13 @@
                 </template>
             </div>
 
-            <!-- ─── RESOURCES LIST (pre-calc context) ───────────────────────── -->
-            <div class="ca-section-header">RESOURCES ({resourceCount})</div>
-            <div class="ca-section-body">
-                <template if:true={hasResourcesWithoutAward}>
-                    <div class="ca-warning-banner">
-                        <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
-                        <span>Some resources have no Award Configuration linked — they are excluded from the calculation.</span>
-                    </div>
-                </template>
-                <template for:each={resources} for:item="r">
-                    <div key={r.resourceId} class="ca-resource-row">
-                        <div class="ca-resource-row-left">
-                            <span class="ca-resource-name">{r.resourceName}</span>
-                            <template if:true={r.hasAwardConfig}>
-                                <span class="ca-resource-meta">{r.awardCode} · {r.classification} · Lvl {r.classificationLevel}</span>
-                            </template>
-                            <template if:false={r.hasAwardConfig}>
-                                <span class="ca-resource-meta ca-resource-meta_warn">No award configuration linked</span>
-                            </template>
-                        </div>
-                        <template if:true={r.hasAwardConfig}>
-                            <span class={r.employmentTypeBadgeClass}>{r.employmentType}</span>
-                        </template>
-                    </div>
-                </template>
-            </div>
+            <!-- Warning for resources without award config -->
+            <template if:true={hasResourcesWithoutAward}>
+                <div class="ca-warning-banner slds-m-bottom_x-small">
+                    <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
+                    <span>Some resources have no Award Configuration linked — they are excluded from the calculation.</span>
+                </div>
+            </template>
 
             <!-- ─── PER-RESOURCE SECTIONS (post-calc) ───────────────────────── -->
             <template if:true={hasResults}>
@@ -211,8 +192,7 @@
         </template><!-- /if:false isLoading -->
 
         <div slot="footer">
-            <lightning-button label="Close" onclick={handleClose} class="slds-m-right_x-small"></lightning-button>
-            <lightning-button variant="brand" label="Calculate" onclick={handleCalculate} disabled={isCalculateDisabled}></lightning-button>
+            <lightning-button label="Close" onclick={handleClose}></lightning-button>
         </div>
 
     </lightning-quick-action-panel>
