@@ -215,6 +215,12 @@
     padding: 8px 14px;
 }
 
+.ca-total-bar_adjusted {
+    background: #eaf5ea;
+    border: 1px dashed #2e844a;
+    margin-top: 2px;
+}
+
 .ca-total-label {
     color: #3e3e3c;
     font-size: 0.75rem;
@@ -227,4 +233,114 @@
     color: #2e844a;
     font-size: 1.1rem;
     font-weight: 700;
+}
+
+.ca-total-amount_adjusted { color: #1a5c34; }
+
+/* ── Calculation notes panel ────────────────────────────────────────────────── */
+
+.ca-notes-panel {
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin: 0 6px 6px;
+    padding: 10px 14px;
+}
+
+.ca-notes-resource-name {
+    color: #080707;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Group label (Rules Applied / Warnings) */
+.ca-notes-group-label {
+    align-items: center;
+    display: flex;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    gap: 5px;
+    letter-spacing: 0.04rem;
+    margin-bottom: 4px;
+    margin-top: 8px;
+    text-transform: uppercase;
+}
+
+.ca-notes-group-label_green { color: #2e844a; }
+.ca-notes-group-label_amber { color: #7a5c00; }
+.ca-notes-group-icon_green  { color: #2e844a; }
+.ca-notes-group-icon_amber  { color: #c07400; }
+
+/* Rule / warning list */
+.ca-notes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ca-notes-item {
+    align-items: flex-start;
+    display: flex;
+    font-size: 0.8125rem;
+    gap: 6px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    padding-left: 2px;
+}
+
+.ca-notes-icon_green { color: #2e844a; flex-shrink: 0; margin-top: 1px; }
+.ca-notes-icon_amber { color: #c07400; flex-shrink: 0; margin-top: 1px; }
+
+.ca-notes-item_applied { color: #3e3e3c; }
+.ca-notes-item_warn    { color: #52430c; }
+
+/* Cost comparison block */
+.ca-notes-comparison {
+    background: #f8f8f6;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding: 8px 10px;
+}
+
+.ca-notes-comparison-title {
+    color: #3e3e3c;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05rem;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.ca-notes-comparison-row {
+    align-items: center;
+    border-bottom: 1px solid #efefef;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.ca-notes-comparison-row:last-of-type { border-bottom: none; }
+
+.ca-notes-comparison-row_adjusted { background: #eaf5ea; border-radius: 3px; padding: 4px 6px; margin: 2px -6px 0; }
+
+.ca-notes-comparison-label {
+    color: #3e3e3c;
+    font-size: 0.8125rem;
+}
+
+.ca-notes-comparison-value {
+    color: #3e3e3c;
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.ca-notes-comparison-value_adjusted { color: #2e844a; }
+
+.ca-notes-comparison-detail {
+    color: #706e6b;
+    font-size: 0.75rem;
+    margin-top: 5px;
 }

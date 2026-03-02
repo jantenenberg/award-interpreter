@@ -154,6 +154,86 @@
                 </div>
             </template>
 
+            <!-- ─── CALCULATION NOTES ─────────────────────────────────────────── -->
+            <template if:true={hasNotes}>
+                <div class="ca-section-header ca-section-header_toggle" onclick={handleToggleNotes}>
+                    <span>CALCULATION NOTES</span>
+                    <lightning-icon icon-name={notesToggleIcon} size="xx-small" class="ca-toggle-icon"></lightning-icon>
+                </div>
+
+                <template if:true={notesExpanded}>
+                <div class="ca-section-body ca-section-body_details">
+
+                    <template for:each={explanations} for:item="exp">
+                    <div key={exp.resourceId} class="ca-notes-panel">
+
+                        <div class="ca-notes-resource-name">{exp.resourceName}</div>
+
+                        <!-- Rules Applied -->
+                        <template if:true={exp.hasAppliedRules}>
+                            <div class="ca-notes-group-label ca-notes-group-label_green">
+                                <lightning-icon icon-name="utility:check" size="xx-small" class="ca-notes-group-icon_green"></lightning-icon>
+                                Rules Applied
+                            </div>
+                            <ul class="ca-notes-list">
+                                <template for:each={exp.appliedRules} for:item="rule">
+                                    <li key={rule.id} class="ca-notes-item ca-notes-item_applied">
+                                        <lightning-icon icon-name="utility:check" size="xx-small" class="ca-notes-icon_green"></lightning-icon>
+                                        <span>{rule.text}</span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+
+                        <!-- Warnings -->
+                        <template if:true={exp.hasWarnings}>
+                            <div class="ca-notes-group-label ca-notes-group-label_amber">
+                                <lightning-icon icon-name="utility:warning" size="xx-small" class="ca-notes-group-icon_amber"></lightning-icon>
+                                Warnings &amp; Unapplied Rules
+                            </div>
+                            <ul class="ca-notes-list">
+                                <template for:each={exp.warnings} for:item="warn">
+                                    <li key={warn.id} class="ca-notes-item ca-notes-item_warn">
+                                        <lightning-icon icon-name="utility:warning" size="xx-small" class="ca-notes-icon_amber"></lightning-icon>
+                                        <span>{warn.text}</span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+
+                        <!-- Cost comparison -->
+                        <template if:true={exp.hasAdjustedCost}>
+                            <div class="ca-notes-comparison">
+                                <div class="ca-notes-comparison-title">Cost Comparison</div>
+                                <div class="ca-notes-comparison-row">
+                                    <span class="ca-notes-comparison-label">As calculated (no break deducted)</span>
+                                    <span class="ca-notes-comparison-value">{exp.grossPayFormatted}</span>
+                                </div>
+                                <div class="ca-notes-comparison-row ca-notes-comparison-row_adjusted">
+                                    <span class="ca-notes-comparison-label">Est. if 30-min meal break applied</span>
+                                    <span class="ca-notes-comparison-value ca-notes-comparison-value_adjusted">{exp.adjustedCostFormatted}</span>
+                                </div>
+                                <div class="ca-notes-comparison-detail">
+                                    Saving: {exp.savingFormatted} — {exp.adjustmentDetail}
+                                </div>
+                            </div>
+                        </template>
+
+                    </div>
+                    </template>
+
+                    <!-- Overall adjusted total (when multiple resources) -->
+                    <template if:true={showCostComparison}>
+                        <div class="ca-total-bar ca-total-bar_adjusted">
+                            <span class="ca-total-label">EST. ADJUSTED TOTAL</span>
+                            <span class="ca-total-amount ca-total-amount_adjusted">{totalAdjustedCostFormatted}</span>
+                        </div>
+                    </template>
+
+                </div>
+                </template>
+            </template>
+
             </template><!-- /appointmentLoaded -->
 
         </template><!-- /if:false isLoading -->
