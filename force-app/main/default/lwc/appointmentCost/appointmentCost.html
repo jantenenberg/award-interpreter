@@ -14,9 +14,9 @@
         </template>
 
         <template if:false={isLoading}>
+        <template if:true={appointmentLoaded}>
 
             <!-- ─── APPOINTMENT BANNER ────────────────────────────────────────── -->
-            <template if:true={appointmentLoaded}>
             <div class="ca-resource-banner">
                 <div class="ca-resource-banner-left">
                     <lightning-icon icon-name="standard:service_appointment" size="x-small" class="ca-resource-icon"></lightning-icon>
@@ -24,10 +24,6 @@
                 </div>
                 <span class={statusBadgeClass}>{appointmentStatus}</span>
             </div>
-            </template>
-
-            <!-- ─── BODY (requires appointment to be loaded) ────────────────── -->
-            <template if:true={appointmentLoaded}>
 
             <!-- ─── DATE SELECTION ───────────────────────────────────────────── -->
             <div class="ca-section-header">DATE SELECTION</div>
@@ -38,20 +34,13 @@
                     </label>
                     <div class="ca-type-group">
                         <template for:each={dateSetOptions} for:item="opt">
-                            <button
-                                key={opt.value}
-                                class={opt.buttonClass}
-                                data-value={opt.value}
-                                disabled={opt.disabled}
-                                onclick={handleDateSetChange}
-                                type="button">
+                            <button key={opt.value} class={opt.buttonClass} data-value={opt.value}
+                                    disabled={opt.disabled} onclick={handleDateSetChange} type="button">
                                 {opt.label}
                             </button>
                         </template>
                     </div>
                 </div>
-
-                <!-- Date preview row -->
                 <template if:true={selectedDateStart}>
                     <div class="ca-date-preview">
                         <lightning-icon icon-name="utility:clock" size="xx-small" class="ca-date-icon"></lightning-icon>
@@ -59,13 +48,11 @@
                     </div>
                 </template>
                 <template if:false={selectedDateStart}>
-                    <p class="slds-text-color_weak slds-text-body_small">
-                        No dates available for the selected option.
-                    </p>
+                    <p class="slds-text-color_weak slds-text-body_small">No dates available for the selected option.</p>
                 </template>
             </div>
 
-            <!-- ─── RESOURCES ─────────────────────────────────────────────────── -->
+            <!-- ─── RESOURCES LIST (pre-calc context) ───────────────────────── -->
             <div class="ca-section-header">RESOURCES ({resourceCount})</div>
             <div class="ca-section-body">
                 <template if:true={hasResourcesWithoutAward}>
@@ -74,7 +61,6 @@
                         <span>Some resources have no Award Configuration linked — they are excluded from the calculation.</span>
                     </div>
                 </template>
-
                 <template for:each={resources} for:item="r">
                     <div key={r.resourceId} class="ca-resource-row">
                         <div class="ca-resource-row-left">
@@ -93,27 +79,33 @@
                 </template>
             </div>
 
-            <!-- ─── COST RESULTS ──────────────────────────────────────────────── -->
-            <template if:true={costResult}>
-                <div class="ca-section-header ca-section-header_toggle" onclick={handleToggleResults}>
-                    <span>COST BREAKDOWN</span>
-                    <lightning-icon icon-name={resultsToggleIcon} size="xx-small" class="ca-toggle-icon"></lightning-icon>
-                </div>
+            <!-- ─── PER-RESOURCE SECTIONS (post-calc) ───────────────────────── -->
+            <template if:true={hasResults}>
+                <template for:each={resourcePanels} for:item="rp">
+                <div key={rp.resourceId}>
 
-                <template if:true={resultsExpanded}>
-                <div class="ca-section-body ca-section-body_details">
-
-                    <template for:each={costResult.resources} for:item="r">
-                    <div key={r.resourceId} class="ca-classification-panel slds-m-bottom_x-small">
-                        <div class="ca-cost-resource-header">
-                            <span class="ca-cl-compact-name">{r.resourceName}</span>
-                            <span class="ca-cost-total">{r.grossPayFormatted}</span>
+                    <!-- Section header (collapsible toggle) -->
+                    <div class="ca-res-section-header"
+                         data-resource-id={rp.resourceId}
+                         onclick={handleToggleResource}>
+                        <div class="ca-res-section-left">
+                            <lightning-icon icon-name={rp.toggleIcon} size="xx-small" class="ca-toggle-icon"></lightning-icon>
+                            <span class="ca-res-section-name">{rp.resourceName}</span>
+                            <span class={rp.empBadgeClass}>{rp.employmentType}</span>
                         </div>
-                        <div class="ca-cost-meta">
-                            <span>{r.classification} · Lvl {r.classificationLevel} · {r.paidHours}h · {r.dayType}</span>
+                        <span class="ca-res-section-cost">{rp.grossPayFormatted}</span>
+                    </div>
+
+                    <!-- Expanded body -->
+                    <template if:true={rp.isExpanded}>
+                    <div class="ca-res-section-body">
+
+                        <!-- Sub-header: Cost breakdown -->
+                        <div class="ca-res-subheader">
+                            <span>COST BREAKDOWN</span>
+                            <span class="ca-res-subheader-meta">{rp.classification} · Lvl {rp.classificationLevel} · {rp.paidHours}h · {rp.dayType}</span>
                         </div>
 
-                        <!-- Segment breakdown -->
                         <table class="ca-segment-table">
                             <thead>
                                 <tr>
@@ -124,8 +116,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template for:each={r.segments} for:item="seg">
-                                    <tr key={seg.penaltyKey}>
+                                <template for:each={rp.segments} for:item="seg">
+                                    <tr key={seg.description}>
                                         <td class="ca-td">{seg.description}</td>
                                         <td class="ca-td ca-td_right">{seg.hours}</td>
                                         <td class="ca-td ca-td_right">{seg.rateFormatted}</td>
@@ -135,48 +127,24 @@
                             </tbody>
                         </table>
 
-                        <template if:true={r.hasWarnings}>
+                        <template if:true={rp.hasBackendWarnings}>
                             <div class="ca-warning-banner ca-warning-banner_sm slds-m-top_x-small">
                                 <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
-                                <span>{r.warningText}</span>
+                                <span>{rp.backendWarningText}</span>
                             </div>
                         </template>
-                    </div>
-                    </template>
 
-                </div>
-                </template>
+                        <!-- Sub-header: Calculation notes -->
+                        <div class="ca-res-subheader ca-res-subheader_notes">CALCULATION NOTES</div>
 
-                <!-- Total bar (always visible when results present) -->
-                <div class="ca-total-bar">
-                    <span class="ca-total-label">TOTAL · {costResult.totalHours}h</span>
-                    <span class="ca-total-amount">{totalCostFormatted}</span>
-                </div>
-            </template>
-
-            <!-- ─── CALCULATION NOTES ─────────────────────────────────────────── -->
-            <template if:true={hasNotes}>
-                <div class="ca-section-header ca-section-header_toggle" onclick={handleToggleNotes}>
-                    <span>CALCULATION NOTES</span>
-                    <lightning-icon icon-name={notesToggleIcon} size="xx-small" class="ca-toggle-icon"></lightning-icon>
-                </div>
-
-                <template if:true={notesExpanded}>
-                <div class="ca-section-body ca-section-body_details">
-
-                    <template for:each={explanations} for:item="exp">
-                    <div key={exp.resourceId} class="ca-notes-panel">
-
-                        <div class="ca-notes-resource-name">{exp.resourceName}</div>
-
-                        <!-- Rules Applied -->
-                        <template if:true={exp.hasAppliedRules}>
+                        <!-- Rules applied -->
+                        <template if:true={rp.hasAppliedRules}>
                             <div class="ca-notes-group-label ca-notes-group-label_green">
                                 <lightning-icon icon-name="utility:check" size="xx-small" class="ca-notes-group-icon_green"></lightning-icon>
                                 Rules Applied
                             </div>
                             <ul class="ca-notes-list">
-                                <template for:each={exp.appliedRules} for:item="rule">
+                                <template for:each={rp.appliedRules} for:item="rule">
                                     <li key={rule.id} class="ca-notes-item ca-notes-item_applied">
                                         <lightning-icon icon-name="utility:check" size="xx-small" class="ca-notes-icon_green"></lightning-icon>
                                         <span>{rule.text}</span>
@@ -186,13 +154,13 @@
                         </template>
 
                         <!-- Warnings -->
-                        <template if:true={exp.hasWarnings}>
+                        <template if:true={rp.hasNoteWarnings}>
                             <div class="ca-notes-group-label ca-notes-group-label_amber">
                                 <lightning-icon icon-name="utility:warning" size="xx-small" class="ca-notes-group-icon_amber"></lightning-icon>
                                 Warnings &amp; Unapplied Rules
                             </div>
                             <ul class="ca-notes-list">
-                                <template for:each={exp.warnings} for:item="warn">
+                                <template for:each={rp.noteWarnings} for:item="warn">
                                     <li key={warn.id} class="ca-notes-item ca-notes-item_warn">
                                         <lightning-icon icon-name="utility:warning" size="xx-small" class="ca-notes-icon_amber"></lightning-icon>
                                         <span>{warn.text}</span>
@@ -202,54 +170,49 @@
                         </template>
 
                         <!-- Cost comparison -->
-                        <template if:true={exp.hasAdjustedCost}>
+                        <template if:true={rp.hasAdjustedCost}>
                             <div class="ca-notes-comparison">
                                 <div class="ca-notes-comparison-title">Cost Comparison</div>
                                 <div class="ca-notes-comparison-row">
                                     <span class="ca-notes-comparison-label">As calculated (no break deducted)</span>
-                                    <span class="ca-notes-comparison-value">{exp.grossPayFormatted}</span>
+                                    <span class="ca-notes-comparison-value">{rp.grossPayFormatted}</span>
                                 </div>
                                 <div class="ca-notes-comparison-row ca-notes-comparison-row_adjusted">
                                     <span class="ca-notes-comparison-label">Est. if 30-min meal break applied</span>
-                                    <span class="ca-notes-comparison-value ca-notes-comparison-value_adjusted">{exp.adjustedCostFormatted}</span>
+                                    <span class="ca-notes-comparison-value ca-notes-comparison-value_adjusted">{rp.adjustedCostFormatted}</span>
                                 </div>
                                 <div class="ca-notes-comparison-detail">
-                                    Saving: {exp.savingFormatted} — {exp.adjustmentDetail}
+                                    Saving: {rp.savingFormatted} — {rp.adjustmentDetail}
                                 </div>
                             </div>
                         </template>
 
                     </div>
-                    </template>
-
-                    <!-- Overall adjusted total (when multiple resources) -->
-                    <template if:true={showCostComparison}>
-                        <div class="ca-total-bar ca-total-bar_adjusted">
-                            <span class="ca-total-label">EST. ADJUSTED TOTAL</span>
-                            <span class="ca-total-amount ca-total-amount_adjusted">{totalAdjustedCostFormatted}</span>
-                        </div>
-                    </template>
+                    </template><!-- /isExpanded -->
 
                 </div>
+                </template><!-- /for:each resourcePanels -->
+
+                <!-- Total bar -->
+                <div class="ca-total-bar">
+                    <span class="ca-total-label">TOTAL · {totalHours}h</span>
+                    <span class="ca-total-amount">{totalCostFormatted}</span>
+                </div>
+                <template if:true={showAdjustedTotal}>
+                    <div class="ca-total-bar ca-total-bar_adjusted">
+                        <span class="ca-total-label">EST. ADJUSTED TOTAL</span>
+                        <span class="ca-total-amount ca-total-amount_adjusted">{adjustedTotalFormatted}</span>
+                    </div>
                 </template>
-            </template>
 
-            </template><!-- /appointmentLoaded -->
+            </template><!-- /hasResults -->
 
+        </template><!-- /appointmentLoaded -->
         </template><!-- /if:false isLoading -->
 
         <div slot="footer">
-            <lightning-button
-                label="Close"
-                onclick={handleClose}
-                class="slds-m-right_x-small">
-            </lightning-button>
-            <lightning-button
-                variant="brand"
-                label="Calculate"
-                onclick={handleCalculate}
-                disabled={isCalculateDisabled}>
-            </lightning-button>
+            <lightning-button label="Close" onclick={handleClose} class="slds-m-right_x-small"></lightning-button>
+            <lightning-button variant="brand" label="Calculate" onclick={handleCalculate} disabled={isCalculateDisabled}></lightning-button>
         </div>
 
     </lightning-quick-action-panel>

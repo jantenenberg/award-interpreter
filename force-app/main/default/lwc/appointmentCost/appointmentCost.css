@@ -152,8 +152,80 @@
 .ca-emp-badge_ft     { background: #e8f0fe; border: 1px solid #4a86e8; color: #1a3c8f; }
 .ca-emp-badge_pt     { background: #f3f2f2; border: 1px solid #dddbda; color: #3e3e3c; }
 
-/* ── Cost result panel ──────────────────────────────────────────────────────── */
+/* ── Per-resource collapsible section ───────────────────────────────────────── */
 
+.ca-res-section-header {
+    align-items: center;
+    background: #f3f2f2;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    margin: 6px 0 0;
+    padding: 8px 12px;
+    user-select: none;
+}
+
+.ca-res-section-header:hover { background: #e8e8e8; }
+
+.ca-res-section-left {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ca-res-section-name {
+    color: #080707;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.ca-res-section-cost {
+    color: #2e844a;
+    flex-shrink: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    margin-left: 12px;
+}
+
+.ca-res-section-body {
+    border: 1px solid #e8e8e8;
+    border-radius: 0 0 4px 4px;
+    border-top: none;
+    margin-bottom: 4px;
+    padding: 10px 14px 12px;
+}
+
+/* Sub-headers inside a resource section */
+.ca-res-subheader {
+    border-bottom: 1px solid #efefef;
+    color: #706e6b;
+    display: flex;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    gap: 10px;
+    justify-content: space-between;
+    letter-spacing: 0.05rem;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.ca-res-subheader_notes {
+    border-top: 1px solid #efefef;
+    margin-top: 12px;
+    padding-top: 10px;
+}
+
+.ca-res-subheader-meta {
+    color: #aeaeae;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* Legacy cost panel (kept for compatibility) */
 .ca-classification-panel {
     border: 1px solid #dddbda;
     border-radius: 4px;
@@ -170,9 +242,7 @@
 }
 
 .ca-cl-compact-name { color: #080707; font-size: 0.875rem; font-weight: 600; }
-
 .ca-cost-total { color: #2e844a; font-size: 0.9375rem; font-weight: 700; }
-
 .ca-cost-meta { color: #706e6b; font-size: 0.75rem; margin-bottom: 8px; }
 
 /* ── Segment table ──────────────────────────────────────────────────────────── */
