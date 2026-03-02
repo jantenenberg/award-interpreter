@@ -66,8 +66,16 @@ export default class AppointmentCost extends LightningElement {
 
     // ── Getters ───────────────────────────────────────────────────────────────
 
+    get appointmentLoaded() {
+        return this.appointment != null;
+    }
+
     get participantName() {
         return this.appointment?.participantName || 'Appointment';
+    }
+
+    get appointmentStatus() {
+        return this.appointment?.status || '';
     }
 
     get statusBadgeClass() {

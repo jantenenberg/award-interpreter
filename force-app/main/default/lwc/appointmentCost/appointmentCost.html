@@ -16,13 +16,18 @@
         <template if:false={isLoading}>
 
             <!-- ─── APPOINTMENT BANNER ────────────────────────────────────────── -->
+            <template if:true={appointmentLoaded}>
             <div class="ca-resource-banner">
                 <div class="ca-resource-banner-left">
                     <lightning-icon icon-name="standard:service_appointment" size="x-small" class="ca-resource-icon"></lightning-icon>
                     <span>Cost for <strong>{participantName}</strong></span>
                 </div>
-                <span class={statusBadgeClass}>{appointment.status}</span>
+                <span class={statusBadgeClass}>{appointmentStatus}</span>
             </div>
+            </template>
+
+            <!-- ─── BODY (requires appointment to be loaded) ────────────────── -->
+            <template if:true={appointmentLoaded}>
 
             <!-- ─── DATE SELECTION ───────────────────────────────────────────── -->
             <div class="ca-section-header">DATE SELECTION</div>
@@ -149,7 +154,9 @@
                 </div>
             </template>
 
-        </template>
+            </template><!-- /appointmentLoaded -->
+
+        </template><!-- /if:false isLoading -->
 
         <div slot="footer">
             <lightning-button
