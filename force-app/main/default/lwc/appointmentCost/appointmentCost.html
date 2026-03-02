@@ -190,11 +190,11 @@
         </template><!-- /appointmentLoaded -->
         </template><!-- /if:false isLoading -->
 
-        <div slot="footer">
-            <lightning-button label="Close" onclick={handleClose}></lightning-button>
+        <div slot="footer" class="ca-footer-actions">
             <template if:true={hasRequiredBreaks}>
-                <lightning-button label="Create Breaks" variant="brand" onclick={handleCreateBreaksClick} class="slds-m-left_x-small"></lightning-button>
+                <lightning-button label="Create Breaks" variant="brand" onclick={handleCreateBreaksClick}></lightning-button>
             </template>
+            <lightning-button label="Close" onclick={handleClose}></lightning-button>
         </div>
 
         <!-- Create Breaks modal -->
@@ -204,8 +204,16 @@
                     <div class="ca-modal-header">
                         <h2 id="create-breaks-title" class="ca-modal-title">Create Breaks</h2>
                         <p class="ca-modal-subtitle">Select the breaks to create to meet award requirements.</p>
+                        <template if:true={hasBreakRows}>
+                            <div class="ca-modal-header-meta">
+                                <div class="ca-modal-header-meta-row"><span class="ca-modal-meta-label">Shift:</span> {breakHeaderShift}</div>
+                            </div>
+                        </template>
                     </div>
                     <div class="ca-modal-body">
+                        <template if:true={breakExcludedInfo}>
+                            <p class="ca-modal-excluded slds-m-bottom_small">{breakExcludedInfo}</p>
+                        </template>
                         <template if:true={hasBreakRows}>
                             <div class="ca-section-header">REQUIRED BREAKS</div>
                             <table class="ca-breaks-table">
@@ -215,11 +223,8 @@
                                             <lightning-input type="checkbox" checked={allBreaksSelected} onchange={handleSelectAllBreaks} data-label="Select all"></lightning-input>
                                         </th>
                                         <th class="ca-breaks-th">Resource</th>
-                                        <th class="ca-breaks-th">Shift</th>
-                                        <th class="ca-breaks-th">Rule</th>
-                                        <th class="ca-breaks-th">Break start</th>
-                                        <th class="ca-breaks-th">Break end</th>
-                                        <th class="ca-breaks-th ca-breaks-th_right">Duration</th>
+                                        <th class="ca-breaks-th">Start Date/Time</th>
+                                        <th class="ca-breaks-th">End Date/Time</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -228,12 +233,20 @@
                                             <td class="ca-breaks-td ca-breaks-td_cb">
                                                 <lightning-input type="checkbox" checked={row.selected} data-resource-id={row.resourceId} onchange={handleBreakRowChange}></lightning-input>
                                             </td>
-                                            <td class="ca-breaks-td">{row.resourceName}</td>
-                                            <td class="ca-breaks-td">{row.shiftDisplay}</td>
-                                            <td class="ca-breaks-td">{row.ruleDescription}</td>
-                                            <td class="ca-breaks-td">{row.breakStartDisplay}</td>
-                                            <td class="ca-breaks-td">{row.breakEndDisplay}</td>
-                                            <td class="ca-breaks-td ca-breaks-td_right">{row.durationMins} min</td>
+                                            <td class="ca-breaks-td">
+                                                <span class="ca-breaks-resource-cell">
+                                                    {row.resourceName}
+                                                    <lightning-helptext content={row.ruleDescription} icon-name="utility:info" class="ca-breaks-rule-tooltip"></lightning-helptext>
+                                                </span>
+                                            </td>
+                                            <td class="ca-breaks-td">
+                                                <lightning-input type="datetime-local" value={row.breakStartForInput} data-resource-id={row.resourceId}
+                                                    onchange={handleBreakStartChange} variant="label-hidden"></lightning-input>
+                                            </td>
+                                            <td class="ca-breaks-td">
+                                                <lightning-input type="datetime-local" value={row.breakEndForInput} data-resource-id={row.resourceId}
+                                                    onchange={handleBreakEndChange} variant="label-hidden"></lightning-input>
+                                            </td>
                                         </tr>
                                     </template>
                                 </tbody>

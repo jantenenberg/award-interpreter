@@ -30,9 +30,11 @@ export default class AppointmentCost extends LightningElement {
     @track resources = [];
     @track selectedDateSet = 'scheduled';
     @track costResult = null;
+    @track existingBreaks = [];  // Used to determine if meal break warning should show
     @track expandedResources = {};
     @track showCreateBreaksModal = false;
     @track breakRows = [];
+    @track breakExcludedCount = 0;  // Resources with warnings but already have breaks
     @track isCreatingBreaks = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -46,12 +48,14 @@ export default class AppointmentCost extends LightningElement {
     async loadData() {
         if (!this._recordId) return;
         try {
-            const [appt, rawResources] = await Promise.all([
+            const [appt, rawResources, existing] = await Promise.all([
                 getAppointmentDetail({ appointmentId: this._recordId }),
                 getAppointmentResources({ appointmentId: this._recordId }),
+                getExistingBreaks({ appointmentId: this._recordId }),
             ]);
             this.appointment = appt;
             this.resources = this._enrichResources(rawResources);
+            this.existingBreaks = existing || [];
             this.selectedDateSet = SCHEDULED_STATUSES.has(appt?.status) ? 'scheduled' : 'actual';
             await this._doCalculate();
         } catch (e) {
@@ -110,6 +114,19 @@ export default class AppointmentCost extends LightningElement {
 
     get hasBreakRows() { return this.breakRows?.length > 0; }
 
+    get breakExcludedInfo() {
+        const n = this.breakExcludedCount || 0;
+        if (n <= 0) return null;
+        return n === 1
+            ? '1 resource already has a sufficient break (30+ min) and is excluded.'
+            : `${n} resources already have sufficient breaks (30+ min) and are excluded.`;
+    }
+
+    get breakHeaderShift() {
+        const first = (this.breakRows || [])[0];
+        return first?.shiftDisplay || '—';
+    }
+
     get selectedBreakCount() {
         return (this.breakRows || []).filter(r => r.selected).length;
     }
@@ -143,11 +160,17 @@ export default class AppointmentCost extends LightningElement {
      * Merged per-resource panels: cost data + explanation + expand/collapse state.
      * One entry per resource in costResult; this drives the per-resource sections in HTML.
      */
+    _toId15(id) {
+        return (id && id.length >= 15) ? id.substring(0, 15) : id;
+    }
+
     get resourcePanels() {
         if (!this.costResult?.resources) return [];
         const explanations = this._buildExplanations(this.costResult);
         return this.costResult.resources.map(r => {
-            const exp = explanations.find(e => e.resourceId === r.resourceId) || {};
+            const exp = explanations.find(e =>
+                e.resourceId === r.resourceId || this._toId15(e.resourceId) === this._toId15(r.resourceId)
+            ) || {};
             const empType = r.employmentType || '';
             const isExpanded = this.expandedResources[r.resourceId] !== false;
             return {
@@ -243,27 +266,37 @@ export default class AppointmentCost extends LightningElement {
         this.isCreatingBreaks = false;
         try {
             const existing = await getExistingBreaks({ appointmentId: this._recordId });
-            const existingResourceIds = new Set((existing || []).map(b => b.resourceId));
-            const panelsNeedingBreak = (this.resourcePanels || []).filter(
-                rp => rp.hasAdjustedCost && !existingResourceIds.has(rp.resourceId)
+            // Only exclude resources that have a SUFFICIENT break (30+ min)
+            const hasSufficientBreakIds = new Set(
+                (existing || []).filter(b => (b.durationMins || 0) >= STANDARD_MEAL_BREAK_MINS).map(b => this._toId15(b.resourceId))
             );
-            this.breakRows = panelsNeedingBreak.map(rp => {
-                const shift = this._getShiftForResource(rp.resourceId);
+            const allNeedingBreak = (this.costResult?.resources || []).filter(r => {
+                if (r.error) return false;
+                return parseFloat(r.paidHours || 0) > MEAL_BREAK_THRESHOLD_HOURS;
+            });
+            const resourcesNeedingBreak = allNeedingBreak.filter(r =>
+                !hasSufficientBreakIds.has(this._toId15(r.resourceId))
+            );
+            this.breakExcludedCount = allNeedingBreak.length - resourcesNeedingBreak.length;
+            this.breakRows = resourcesNeedingBreak.map(r => {
+                const shift = this._getShiftForResource(r.resourceId);
                 const breakStart = this._addHours(shift.start, MEAL_BREAK_THRESHOLD_HOURS);
                 const breakEnd   = this._addMinutes(breakStart, STANDARD_MEAL_BREAK_MINS);
                 return {
-                    resourceId:        rp.resourceId,
-                    resourceName:      rp.resourceName,
+                    resourceId:         r.resourceId,
+                    resourceName:      r.resourceName,
                     shiftDisplay:      shift.start && shift.end ? `${this._fmt(shift.start)} → ${this._fmt(shift.end)}` : '—',
                     ruleDescription:   `30-min meal break (MA000004 cl.34.1)`,
                     breakStartIso:     breakStart,
                     breakEndIso:       breakEnd,
+                    breakStartForInput: breakStart ? breakStart.substring(0, 16) : '',
+                    breakEndForInput:   breakEnd ? breakEnd.substring(0, 16) : '',
                     breakStartDisplay: this._fmt(breakStart),
                     breakEndDisplay:   this._fmt(breakEnd),
                     durationMins:      STANDARD_MEAL_BREAK_MINS,
                     selected:          true,
                 };
-            });
+            }).filter(row => row.breakStartIso != null);
         } catch (e) {
             this.errorMessage = 'Failed to load required breaks: ' + (e.body?.message || e.message);
         }
@@ -272,13 +305,54 @@ export default class AppointmentCost extends LightningElement {
     handleCloseBreaksModal() {
         this.showCreateBreaksModal = false;
         this.breakRows = [];
+        this.breakExcludedCount = 0;
     }
 
     handleBreakRowChange(event) {
         const id = event.currentTarget.dataset.resourceId;
         this.breakRows = this.breakRows.map(r =>
-            r.resourceId === id ? { ...r, selected: !r.selected } : r
+            this._toId15(r.resourceId) === this._toId15(id) ? { ...r, selected: !r.selected } : r
         );
+    }
+
+    handleBreakStartChange(event) {
+        const id = event.currentTarget.dataset.resourceId;
+        const val = event.target.value;  // YYYY-MM-DDTHH:mm or YYYY-MM-DDTHH:mm:ss
+        if (!val) return;
+        const breakStartIso = val.length <= 16 ? val + ':00' : val.substring(0, 19);
+        this.breakRows = this.breakRows.map(r => {
+            if (this._toId15(r.resourceId) !== this._toId15(id)) return r;
+            const breakEndIso = this._addMinutes(breakStartIso, r.durationMins);
+            return {
+                ...r,
+                breakStartIso,
+                breakEndIso,
+                breakStartForInput: breakStartIso.substring(0, 16),
+                breakEndForInput: breakEndIso ? breakEndIso.substring(0, 16) : '',
+                breakStartDisplay: this._fmt(breakStartIso),
+                breakEndDisplay: this._fmt(breakEndIso),
+            };
+        });
+    }
+
+    handleBreakEndChange(event) {
+        const id = event.currentTarget.dataset.resourceId;
+        const val = event.target.value;
+        if (!val) return;
+        const breakEndIso = val.length <= 16 ? val + ':00' : val.substring(0, 19);
+        this.breakRows = this.breakRows.map(r => {
+            if (this._toId15(r.resourceId) !== this._toId15(id)) return r;
+            const durationMins = this._minutesBetween(r.breakStartIso, breakEndIso);
+            const clampedDuration = Math.min(120, Math.max(1, durationMins));
+            const actualEndIso = this._addMinutes(r.breakStartIso, clampedDuration);
+            return {
+                ...r,
+                durationMins: clampedDuration,
+                breakEndIso: actualEndIso,
+                breakEndForInput: actualEndIso ? actualEndIso.substring(0, 16) : '',
+                breakEndDisplay: this._fmt(actualEndIso),
+            };
+        });
     }
 
     handleSelectAllBreaks() {
@@ -372,16 +446,24 @@ export default class AppointmentCost extends LightningElement {
                 let adjustedCost = null, adjustmentDetail = null;
 
                 if (paidHours > MEAL_BREAK_THRESHOLD_HOURS) {
-                    const breakHours    = STANDARD_MEAL_BREAK_MINS / 60;
-                    const savedRate     = otFirst3Seg ? parseFloat(otFirst3Seg.rate) : ordRate;
-                    const saving        = breakHours * savedRate;
-                    adjustedCost        = grossPay - saving;
-                    adjustmentDetail    = `${STANDARD_MEAL_BREAK_MINS} min × $${savedRate.toFixed(4)}/hr ≈ $${saving.toFixed(2)} saving`;
+                    const hasSufficientBreak = this._hasSufficientBreak(r.resourceId);
+                    if (hasSufficientBreak) {
+                        appliedRules.push({
+                            id: 'mb_ok',
+                            text: `Meal break requirements met (MA000004 cl.34.1): a break of 30+ min is recorded for this shift.`,
+                        });
+                    } else {
+                        const breakHours    = STANDARD_MEAL_BREAK_MINS / 60;
+                        const savedRate     = otFirst3Seg ? parseFloat(otFirst3Seg.rate) : ordRate;
+                        const saving        = breakHours * savedRate;
+                        adjustedCost        = grossPay - saving;
+                        adjustmentDetail    = `${STANDARD_MEAL_BREAK_MINS} min × $${savedRate.toFixed(4)}/hr ≈ $${saving.toFixed(2)} saving`;
 
-                    warnings.push({
-                        id: 'mb',
-                        text: `Unpaid meal break not deducted (MA000004 cl.34.1): shifts over ${MEAL_BREAK_THRESHOLD_HOURS} hours require a 30–60 min unpaid meal break. A standard 30-min break has not been applied.`,
-                    });
+                        warnings.push({
+                            id: 'mb',
+                            text: `Unpaid meal break not deducted (MA000004 cl.34.1): shifts over ${MEAL_BREAK_THRESHOLD_HOURS} hours require a 30–60 min unpaid meal break. A standard 30-min break has not been applied.`,
+                        });
+                    }
                 }
                 if ((r.dayType === 'saturday' || r.dayType === 'sunday') && paidHours > ORDINARY_HOURS_THRESHOLD) {
                     warnings.push({
@@ -404,6 +486,16 @@ export default class AppointmentCost extends LightningElement {
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Returns true if the resource has at least one Appointment Break of 30+ min.
+     */
+    _hasSufficientBreak(resourceId) {
+        const id15 = this._toId15(resourceId);
+        return (this.existingBreaks || []).some(b =>
+            this._toId15(b.resourceId) === id15 && (b.durationMins || 0) >= STANDARD_MEAL_BREAK_MINS
+        );
+    }
 
     _btnClass(value) {
         return ['ca-type-btn', this.selectedDateSet === value ? 'ca-type-btn_active' : '']
@@ -441,18 +533,21 @@ export default class AppointmentCost extends LightningElement {
 
     _getShiftForResource(resourceId) {
         const appt = this.appointment;
-        const res  = this.resources.find(r => r.resourceId === resourceId);
-        if (!appt || !res) return { start: null, end: null };
+        if (!appt) return { start: null, end: null };
+        // Match by full ID or 15-char prefix (Salesforce ID format can differ)
+        const res = this.resources.find(r =>
+            r.resourceId === resourceId || this._toId15(r.resourceId) === this._toId15(resourceId)
+        );
         let start, end;
         if (this.selectedDateSet === 'scheduled') {
             start = appt.scheduledStart;
             end   = appt.scheduledEnd;
         } else if (this.selectedDateSet === 'actual') {
-            start = res.actualStart || appt.actualStart;
-            end   = res.actualEnd   || appt.actualEnd;
+            start = (res?.actualStart) || appt.actualStart;
+            end   = (res?.actualEnd)   || appt.actualEnd;
         } else {
-            start = res.checkInTime;
-            end   = res.checkOutTime;
+            start = res?.checkInTime ?? null;
+            end   = res?.checkOutTime ?? null;
         }
         return { start, end };
     }
@@ -475,6 +570,13 @@ export default class AppointmentCost extends LightningElement {
         const d = new Date(iso);
         d.setTime(d.getTime() + mins * 60 * 1000);
         return this._toIsoLocal(d);
+    }
+
+    _minutesBetween(isoStart, isoEnd) {
+        if (!isoStart || !isoEnd) return 0;
+        const a = new Date(isoStart).getTime();
+        const b = new Date(isoEnd).getTime();
+        return Math.round((b - a) / (60 * 1000));
     }
 
     _enrichResources(raw) {

@@ -34,3 +34,7 @@ Thumbs.db
 # Optional: ignore local overrides of reference data if you use custom CSVs
 # data/source/
 data/source/
+
+# Salesforce CLI local config (org auth, etc.) — never commit
+.sf/
+.sfdx/

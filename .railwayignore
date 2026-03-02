@@ -1,0 +1,31 @@
+# Exclude from Railway deployment — backend only needs backend/, config, and data structure.
+# Everything here stays in git but is not uploaded to Railway.
+
+# Salesforce (LWC, Apex, metadata)
+force-app/
+.sf/
+.sfdx/
+sfdx-project.json
+
+# Browser-based frontend (Phase 1 — not used by Railway API)
+src/
+index.html
+config.html
+documentation.html
+reference-data.html
+styles.css
+server.js
+
+# Node (Railway runs Python backend only)
+node_modules/
+package-lock.json
+
+# Tests and dev tooling
+tests/
+vitest.config.js
+.claude/
+.vscode/
+.pytest_cache/
+
+# Assets (not needed at runtime)
+assets/
